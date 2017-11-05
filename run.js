@@ -147,4 +147,13 @@ for (let i = 0; i < 1e4; i++) {
   })();
 }
 
+// Throw away top and bottom 2.5%
+['rent', 'buy', 'couch'].map(key => {
+  res[key].sort((a,b) => a - b);
+  const l = res[key].length;
+  const low = Math.round(l * 0.025);
+  const high = l - low;
+  res[key] = res[key].slice(low, high);
+});
+
 fs.writeFileSync('./data.js', `const data = ${JSON.stringify(res)};`);
