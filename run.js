@@ -45,7 +45,8 @@ const MORTGAGE_TERM = 25; // years
 
 const res = {
   rent: [],
-  buy: []
+  buy: [],
+  couch: []
 };
 for (let i = 0; i < 1e4; i++) {
   (function() {
@@ -59,7 +60,8 @@ for (let i = 0; i < 1e4; i++) {
     let deposit = 0; // $ deposit saved so far
     let stock = { // stock market balance
       rent: 0,
-      buy: 0
+      buy: 0,
+      couch: 0
     };
     let bought = false;
     let defaulted = false;
@@ -74,6 +76,7 @@ for (let i = 0; i < 1e4; i++) {
 
       let stock_return = STOCK_RETURN(); // stock market return for this month
       stock.rent = (stock.rent + income - rent) * (1 + stock_return); // stock in rent condition, simples...
+      stock.couch += income - rent; // stuff it in the couch
 
       property_value *= 1 + PROPERTY_APPRECIATION(); // new property value
 
@@ -130,6 +133,7 @@ for (let i = 0; i < 1e4; i++) {
 
     // Final tally.
     res.rent.push(stock.rent);
+    res.couch.push(stock.couch);
 
     if (bought) {
       if (defaulted) {

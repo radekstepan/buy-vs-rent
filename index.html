@@ -24,11 +24,13 @@
       $(function() {
         const n = 20;
         const max = Math.max(d3.extent(data.rent)[1], d3.extent(data.buy)[1]);
+
         const x = d3.scaleLinear().domain([0, max]).nice(n);
         const histogram = d3.histogram().domain(x.domain()).thresholds(x.ticks(n));
         const bins ={
           rent: histogram(data.rent),
-          buy: histogram(data.buy)
+          buy: histogram(data.buy),
+          couch: histogram(data.couch)
         };
 
         new Chart({
@@ -46,6 +48,11 @@
                 title: "Buy",
                 values: bins.buy.map(bin => bin.length)
               }
+              // }, {
+              //   color: "violet",
+              //   title: "Couch",
+              //   values: bins.couch.map(bin => bin.length)
+              // }
             ]
           },
           type: 'line',
