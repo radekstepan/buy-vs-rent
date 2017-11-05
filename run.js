@@ -13,8 +13,12 @@ const n = val => numeral(val).value();
 
 const INCOME = n('8k'); // $ available to spend on housing/investments
 const INCOME_INCREASE = 0.03; // % yearly
-const RENT = n('3k'); // $ monthly
-const RENT_INCREASE = 0.03; // % yearly
+const RENT = n('4k'); // $ monthly
+// https://www.ontario.ca/page/rent-increase-guideline
+const RENT_INCREASE = (function() { // yearly rate
+  const d = r('rent_increase.csv', parseFloat);
+  return () => d[PD.rint(1, 0, d.length - 1).pop()];
+})();
 
 // const STOCK_RETURN = () => PD.rnorm(1, 0.65, 2.78).pop() / 100;
 // https://www.portfoliovisualizer.com/backtest-portfolio
@@ -122,7 +126,7 @@ for (let i = 0; i < 1e4; i++) {
       // A new year.
       if (!(month % 12)) {
         property_value_yearly = property_value; // update yearly property value
-        rent *= (1 + RENT_INCREASE); // rent is more expensive
+        rent *= (1 + RENT_INCREASE()); // rent is more expensive
         income *= (1 + INCOME_INCREASE); // I make more
 
         year += 1; month = 0;
