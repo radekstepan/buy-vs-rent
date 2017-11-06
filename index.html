@@ -8,7 +8,7 @@
       padding: 20px;
     }
     #chart {
-      width: 50%;
+      width: 60%;
       height: 500px;
       border: 1px solid #ddd;
       border-radius: 3px;
@@ -22,6 +22,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
     <script>
       $(function() {
+        const { data, props } = d;
+
         const n = 20;
         const max = Math.max(d3.extent(data.rent)[1], d3.extent(data.buy)[1]);
 
@@ -35,23 +37,31 @@
 
         new Chart({
           parent: "#chart",
-          title: "Rent vs Buy",
+          title: [
+            'INCOME:',
+            numeral(props.income).format('$0.0a'),
+            'HOUSE:',
+            numeral(props.house).format('$0.0a'),
+            'RENT:',
+            numeral(props.rent).format('$0.0a'),
+          ].join(' '),
           data: {
             labels: bins.rent.map(bin => numeral(bin.x1).format('0.0a')),
             datasets: [
               {
-                color: "light-blue",
+                color: "green",
                 title: "Rent",
                 values: bins.rent.map(bin => bin.length)
               }, {
                 color: "blue",
                 title: "Buy",
                 values: bins.buy.map(bin => bin.length)
-              }, {
-                color: "violet",
-                title: "Couch",
-                values: bins.couch.map(bin => bin.length)
               }
+              // }, {
+              //   color: "grey",
+              //   title: "Couch",
+              //   values: bins.couch.map(bin => bin.length)
+              // }
             ]
           },
           type: 'line',

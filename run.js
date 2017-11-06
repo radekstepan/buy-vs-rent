@@ -9,12 +9,14 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const INCOME = n('200k') / 12; // $ net monthly income before tax
+const INCOME = n('200k'); // $ net yearly income
 const INCOME_INCREASE = 0.03; // % yearly
 const INCOME_TAX = 0.3; // %
 const INCOME_TAX_INCREASE = 0.005; // % yearly increase to income tax (higher band etc.)
 const EXPENSES = n('4k'); // monthly expenses
-const EXPENSES_INCREASE = 0.03; // % yearly
+const EXPENSES_INCREASE = 0.02; // % yearly
+
+const SAVINGS = 0; // monies already saved up
 
 const RENT = n('4k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
@@ -36,7 +38,7 @@ const PROPERTY_APPRECIATION = (function() { // monthly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 const PROPERTY_TAX = 0.007; // % of property value yearly
-const PROPERTY_TAX_INCREASE = 0.04; // % yearly
+const PROPERTY_TAX_INCREASE = 0.01; // % yearly
 const PROPERTY_MAINTENANCE = 0.01; // % of property value earmarked yearly
 const PROPERTY_TRANSACTION_FEES = 0.05; // % transaction fees to buy/sell
 
@@ -51,29 +53,38 @@ const MORTGAGE_TERM = 25; // years
 // ------------------------
 
 const res = {
-  rent: [],
-  buy: [],
-  couch: []
+  props: {
+    income: INCOME,
+    rent: RENT,
+    house: PROPERTY_VALUE,
+    savings: SAVINGS
+  },
+  data: {
+    rent: [],
+    buy: [],
+    couch: []
+  }
 };
-for (let i = 0; i < 1e4; i++) {
+for (let i = 0; i < 1e3; i++) {
   (function() {
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
-    let income = INCOME; // monthly income for this year
+    let income = INCOME / 12; // monthly income for this year
     let income_tax = INCOME_TAX; // income tax for this year
     let expenses = EXPENSES; // monthly expenses for this year
     let rent = RENT; // monthly rent for this year
     let mortgage = null;
     let mortgage_rate = MORTGAGE_RATE();
 
-    let deposit = 0; // $ deposit saved so far
+    let deposit = SAVINGS; // $ deposit saved so far
     let stock = { // stock market balance
       rent: 0,
       buy: 0
     };
     let couch = 0;
-    let bought = false;
+    let paid_off = false; // when is this house paid off?
     let defaulted = false;
+    let equity = 0; // amount of monies paid off on mortgage already
 
     let stop = false;
     let year = 1;
@@ -85,7 +96,7 @@ for (let i = 0; i < 1e4; i++) {
 
       let stock_return = STOCK_RETURN(); // stock market return for this month
       if (stock_return > 0) { // we'll need to pay tax on stock market profit; TODO RRSP
-        stock_return *= (1 - income_tax);
+        stock_return *= 1 - income_tax;
       }
 
       let available = (income * (1 - income_tax)) - expenses;
@@ -96,35 +107,39 @@ for (let i = 0; i < 1e4; i++) {
 
       if (!defaulted) {
         // Saving for house deposit.
-        if (!bought) {
+        if (!paid_off) {
           let deposit_needed = property_value * (MORTGAGE_DEPOSIT + PROPERTY_TRANSACTION_FEES); // this is how much I need to save
           deposit += available - rent; // saved up more
 
           // Saved up enough? Buy!
           if (deposit >= deposit_needed) {
-            stock.buy = deposit - deposit_needed; // leftover goes to stock
+            stock.buy += deposit - deposit_needed; // leftover goes to stock
             mortgage = property_value * (1 - MORTGAGE_DEPOSIT); // mortgage amount
-            bought = now;
+            paid_off = now + (MORTGAGE_TERM * 12);
           }
         } else {
           let mortgage_payment = 0;
 
           // Paying off mortgage?
-          if (!((bought + (MORTGAGE_TERM * 12)) === now)) {
+          if (paid_off > now) {
             if ((now % (5 * 12)) === 0) mortgage_rate = MORTGAGE_RATE(); // adjust mortgage rate after 5 years?
             mortgage_payment = finance.AM(mortgage, mortgage_rate * 100, MORTGAGE_TERM * 12, 1); // monthly repayment
           }
 
           let property_tax = (property_value_yearly * PROPERTY_TAX) / 12; // property tax for this month
-          let property_maintenance = (property_value * PROPERTY_MAINTENANCE) / 12; // property maintenance for this month
+          let property_maintenance = (property_value_yearly * PROPERTY_MAINTENANCE) / 12; // property maintenance for this month
 
           available -= mortgage_payment + property_tax + property_maintenance; // available to invest
+          equity += mortgage_payment;
 
           // Can't pay up?
           if (available < 0) {
+            // Sell the house, move the monies to stock and rent again.
+            if (paid_off > now) {
+              stock.buy -= mortgage - equity; // haven't paid off mortgage yet
+            }
+            stock.buy += property_value * (1 - PROPERTY_TRANSACTION_FEES);
             defaulted = true;
-            // TODO sell the house, pay off rest of the mortgage and move any money left to stock
-            property_value = 0;
           } else {
             stock.buy = (stock.buy + available) * (1 + stock_return); // adjust stock market portfolio
           }
@@ -149,28 +164,28 @@ for (let i = 0; i < 1e4; i++) {
     }
 
     // Final tally.
-    res.rent.push(stock.rent);
-    res.couch.push(couch);
+    res.data.rent.push(stock.rent);
+    res.data.couch.push(couch);
 
-    if (bought) {
+    if (paid_off) {
       if (defaulted) {
-        res.buy.push(stock.buy);
+        res.data.buy.push(stock.buy);
       } else {
-        res.buy.push((property_value * (1 - PROPERTY_TRANSACTION_FEES)) + stock.buy); // TODO assumes house is paid off!
+        res.data.buy.push((property_value * (1 - PROPERTY_TRANSACTION_FEES)) + stock.buy); // TODO assumes house is paid off!
       }
     } else {
-      res.buy.push(deposit);
+      res.data.buy.push(deposit);
     }
   })();
 }
 
 // Throw away top and bottom 2.5%
 ['rent', 'buy', 'couch'].map(key => {
-  res[key].sort((a,b) => a - b);
-  const l = res[key].length;
+  res.data[key].sort((a,b) => a - b);
+  const l = res.data[key].length;
   const low = Math.round(l * 0.025);
   const high = l - low;
-  res[key] = res[key].slice(low, high);
+  res.data[key] = res.data[key].slice(low, high);
 });
 
-fs.writeFileSync('./data.js', `const data = ${JSON.stringify(res)};`);
+fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res)};`);
