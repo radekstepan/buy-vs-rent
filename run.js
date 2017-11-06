@@ -9,16 +9,16 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const INCOME = n('200k'); // $ net yearly income
+const INCOME = n('100k'); // $ net yearly income
 const INCOME_INCREASE = 0.03; // % yearly
 const INCOME_TAX = 0.3; // %
 const INCOME_TAX_INCREASE = 0.005; // % yearly increase to income tax (higher band etc.)
-const EXPENSES = n('4k'); // monthly expenses
+const EXPENSES = n('2k'); // monthly expenses
 const EXPENSES_INCREASE = 0.02; // % yearly
 
 const SAVINGS = 0; // monies already saved up
 
-const RENT = n('4k'); // $ monthly
+const RENT = n('1620'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 const RENT_INCREASE = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -32,7 +32,7 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('1m'); // $
+const PROPERTY_VALUE = n('450k'); // $
 const PROPERTY_APPRECIATION = (function() { // monthly rate
   const d = r('single_family_appreciation_toronto.csv', parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
@@ -56,8 +56,11 @@ const res = {
   props: {
     income: INCOME,
     rent: RENT,
-    house: PROPERTY_VALUE,
-    savings: SAVINGS
+    house: PROPERTY_VALUE
+  },
+  stats: {
+    bought: 0,
+    defaulted: 0,
   },
   data: {
     rent: [],
@@ -65,7 +68,7 @@ const res = {
     couch: []
   }
 };
-for (let i = 0; i < 1e3; i++) {
+for (let i = 0; i < 1e4; i++) {
   (function() {
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
@@ -159,8 +162,8 @@ for (let i = 0; i < 1e3; i++) {
 
         year += 1; month = 0;
       }
-      // Stop after 35 years automatically.
-      if (year > 35) stop = true;
+      // Stop after 30 years automatically.
+      if (year > 30) stop = true;
     }
 
     // Final tally.
@@ -168,8 +171,10 @@ for (let i = 0; i < 1e3; i++) {
     res.data.couch.push(couch);
 
     if (paid_off) {
+      res.stats.bought += 1;
       if (defaulted) {
         res.data.buy.push(stock.buy);
+        res.stats.defaulted += 1;
       } else {
         res.data.buy.push((property_value * (1 - PROPERTY_TRANSACTION_FEES)) + stock.buy); // TODO assumes house is paid off!
       }

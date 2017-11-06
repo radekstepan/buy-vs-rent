@@ -22,7 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
     <script>
       $(function() {
-        const { data, props } = d;
+        const { data, stats, props } = d;
 
         const n = 20;
         const max = Math.max(d3.extent(data.rent)[1], d3.extent(data.buy)[1]);
@@ -44,6 +44,10 @@
             numeral(props.house).format('$0.0a'),
             'RENT:',
             numeral(props.rent).format('$0.0a'),
+            '(BOUGHT:',
+            `${stats.bought}×`,
+            'DEFAULTED:',
+            `${stats.defaulted}×)`
           ].join(' '),
           data: {
             labels: bins.rent.map(bin => numeral(bin.x1).format('0.0a')),
