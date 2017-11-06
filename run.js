@@ -9,16 +9,16 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const INCOME = n('100k'); // $ net yearly income
+const INCOME = n('250k'); // $ net yearly income
 const INCOME_INCREASE = 0.03; // % yearly
 const INCOME_TAX = 0.3; // %
-const INCOME_TAX_INCREASE = 0.005; // % yearly increase to income tax (higher band etc.)
-const EXPENSES = n('2k'); // monthly expenses
+const INCOME_TAX_INCREASE = 0.0025; // % yearly increase to income tax (higher band etc.)
+const EXPENSES = n('4k'); // monthly expenses
 const EXPENSES_INCREASE = 0.02; // % yearly
 
-const SAVINGS = 0; // monies already saved up
+const SAVINGS = n('100k'); // monies already saved up
 
-const RENT = n('1620'); // $ monthly
+const RENT = n('4k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 const RENT_INCREASE = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -32,15 +32,15 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('450k'); // $
+const PROPERTY_VALUE = n('1m'); // $
 const PROPERTY_APPRECIATION = (function() { // monthly rate
   const d = r('single_family_appreciation_toronto.csv', parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 const PROPERTY_TAX = 0.007; // % of property value yearly
-const PROPERTY_TAX_INCREASE = 0.01; // % yearly
-const PROPERTY_MAINTENANCE = 0.01; // % of property value earmarked yearly
-const PROPERTY_TRANSACTION_FEES = 0.05; // % transaction fees to buy/sell
+const PROPERTY_TAX_INCREASE = 0.03; // % yearly
+const PROPERTY_MAINTENANCE = 0.015; // % of property value earmarked yearly
+const PROPERTY_TRANSACTION_FEES = 0.06; // % transaction fees to buy/sell
 
 const MORTGAGE_DEPOSIT = 0.2; // % of buy price
 // https://www.ratehub.ca/5-year-fixed-mortgage-rate-history
@@ -68,10 +68,11 @@ const res = {
     couch: []
   }
 };
-for (let i = 0; i < 1e4; i++) {
+for (let i = 0; i < 1e3; i++) {
   (function() {
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
+    let property_tax = null;
     let income = INCOME / 12; // monthly income for this year
     let income_tax = INCOME_TAX; // income tax for this year
     let expenses = EXPENSES; // monthly expenses for this year
@@ -119,6 +120,7 @@ for (let i = 0; i < 1e4; i++) {
             stock.buy += deposit - deposit_needed; // leftover goes to stock
             mortgage = property_value * (1 - MORTGAGE_DEPOSIT); // mortgage amount
             paid_off = now + (MORTGAGE_TERM * 12);
+            property_tax = property_value * PROPERTY_TAX;
           }
         } else {
           let mortgage_payment = 0;
@@ -129,10 +131,9 @@ for (let i = 0; i < 1e4; i++) {
             mortgage_payment = finance.AM(mortgage, mortgage_rate * 100, MORTGAGE_TERM * 12, 1); // monthly repayment
           }
 
-          let property_tax = (property_value_yearly * PROPERTY_TAX) / 12; // property tax for this month
           let property_maintenance = (property_value_yearly * PROPERTY_MAINTENANCE) / 12; // property maintenance for this month
 
-          available -= mortgage_payment + property_tax + property_maintenance; // available to invest
+          available -= mortgage_payment + (property_tax / 12) + property_maintenance; // available to invest
           equity += mortgage_payment;
 
           // Can't pay up?
@@ -154,6 +155,7 @@ for (let i = 0; i < 1e4; i++) {
       // A new year.
       if (!(month % 12)) {
         property_value_yearly = property_value; // update yearly property value
+        property_tax *= 1 + PROPERTY_TAX_INCREASE; // tax is higher
         rent *= (1 + RENT_INCREASE()); // rent is more expensive
 
         income *= (1 + INCOME_INCREASE); // I make more
