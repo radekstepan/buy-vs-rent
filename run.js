@@ -9,13 +9,12 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const INCOME = n('17k'); // $ net income before tax
+const INCOME = n('200k') / 12; // $ net monthly income before tax
 const INCOME_INCREASE = 0.03; // % yearly
 const INCOME_TAX = 0.3; // %
 const INCOME_TAX_INCREASE = 0.005; // % yearly increase to income tax (higher band etc.)
 const EXPENSES = n('4k'); // monthly expenses
 const EXPENSES_INCREASE = 0.03; // % yearly
-const RRSP_ALLOWANCE = 0.18; // % of income that can be moved to an RRSP account
 
 const RENT = n('4k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
@@ -56,7 +55,7 @@ const res = {
   buy: [],
   couch: []
 };
-for (let i = 0; i < 1e3; i++) {
+for (let i = 0; i < 1e4; i++) {
   (function() {
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
@@ -70,9 +69,9 @@ for (let i = 0; i < 1e3; i++) {
     let deposit = 0; // $ deposit saved so far
     let stock = { // stock market balance
       rent: 0,
-      buy: 0,
-      couch: 0
+      buy: 0
     };
+    let couch = 0;
     let bought = false;
     let defaulted = false;
 
@@ -85,9 +84,13 @@ for (let i = 0; i < 1e3; i++) {
       now = ((year - 1) * 12) + month;
 
       let stock_return = STOCK_RETURN(); // stock market return for this month
+      if (stock_return > 0) { // we'll need to pay tax on stock market profit; TODO RRSP
+        stock_return *= (1 - income_tax);
+      }
+
       let available = (income * (1 - income_tax)) - expenses;
       stock.rent = (stock.rent + available - rent) * (1 + stock_return); // stock in rent condition, simples...
-      stock.couch += available - rent; // stuff it in the couch
+      couch += available - rent; // stuff it in the couch
 
       property_value *= 1 + PROPERTY_APPRECIATION(); // new property value
 
@@ -147,7 +150,7 @@ for (let i = 0; i < 1e3; i++) {
 
     // Final tally.
     res.rent.push(stock.rent);
-    res.couch.push(stock.couch);
+    res.couch.push(couch);
 
     if (bought) {
       if (defaulted) {

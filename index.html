@@ -8,7 +8,7 @@
       padding: 20px;
     }
     #chart {
-      width: 100%;
+      width: 50%;
       height: 500px;
       border: 1px solid #ddd;
       border-radius: 3px;
@@ -37,7 +37,7 @@
           parent: "#chart",
           title: "Rent vs Buy",
           data: {
-            labels: bins.rent.map(bin => numeral(bin.x1).format('0a')),
+            labels: bins.rent.map(bin => numeral(bin.x1).format('0.0a')),
             datasets: [
               {
                 color: "light-blue",
@@ -47,12 +47,11 @@
                 color: "blue",
                 title: "Buy",
                 values: bins.buy.map(bin => bin.length)
+              }, {
+                color: "violet",
+                title: "Couch",
+                values: bins.couch.map(bin => bin.length)
               }
-              // }, {
-              //   color: "violet",
-              //   title: "Couch",
-              //   values: bins.couch.map(bin => bin.length)
-              // }
             ]
           },
           type: 'line',
