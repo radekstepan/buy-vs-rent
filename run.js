@@ -9,10 +9,14 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-// TODO handle taxation of stock and RRSP
-
-const INCOME = n('8k'); // $ available to spend on housing/investments
+const INCOME = n('17k'); // $ net income before tax
 const INCOME_INCREASE = 0.03; // % yearly
+const INCOME_TAX = 0.3; // %
+const INCOME_TAX_INCREASE = 0.005; // % yearly increase to income tax (higher band etc.)
+const EXPENSES = n('4k'); // monthly expenses
+const EXPENSES_INCREASE = 0.03; // % yearly
+const RRSP_ALLOWANCE = 0.18; // % of income that can be moved to an RRSP account
+
 const RENT = n('4k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 const RENT_INCREASE = (function() { // yearly rate
@@ -52,11 +56,13 @@ const res = {
   buy: [],
   couch: []
 };
-for (let i = 0; i < 1e4; i++) {
+for (let i = 0; i < 1e3; i++) {
   (function() {
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
     let income = INCOME; // monthly income for this year
+    let income_tax = INCOME_TAX; // income tax for this year
+    let expenses = EXPENSES; // monthly expenses for this year
     let rent = RENT; // monthly rent for this year
     let mortgage = null;
     let mortgage_rate = MORTGAGE_RATE();
@@ -79,8 +85,9 @@ for (let i = 0; i < 1e4; i++) {
       now = ((year - 1) * 12) + month;
 
       let stock_return = STOCK_RETURN(); // stock market return for this month
-      stock.rent = (stock.rent + income - rent) * (1 + stock_return); // stock in rent condition, simples...
-      stock.couch += income - rent; // stuff it in the couch
+      let available = (income * (1 - income_tax)) - expenses;
+      stock.rent = (stock.rent + available - rent) * (1 + stock_return); // stock in rent condition, simples...
+      stock.couch += available - rent; // stuff it in the couch
 
       property_value *= 1 + PROPERTY_APPRECIATION(); // new property value
 
@@ -88,7 +95,7 @@ for (let i = 0; i < 1e4; i++) {
         // Saving for house deposit.
         if (!bought) {
           let deposit_needed = property_value * (MORTGAGE_DEPOSIT + PROPERTY_TRANSACTION_FEES); // this is how much I need to save
-          deposit += income - rent; // saved up more
+          deposit += available - rent; // saved up more
 
           // Saved up enough? Buy!
           if (deposit >= deposit_needed) {
@@ -108,7 +115,7 @@ for (let i = 0; i < 1e4; i++) {
           let property_tax = (property_value_yearly * PROPERTY_TAX) / 12; // property tax for this month
           let property_maintenance = (property_value * PROPERTY_MAINTENANCE) / 12; // property maintenance for this month
 
-          let available = income - mortgage_payment - property_tax - property_maintenance; // available to invest
+          available -= mortgage_payment + property_tax + property_maintenance; // available to invest
 
           // Can't pay up?
           if (available < 0) {
@@ -120,14 +127,17 @@ for (let i = 0; i < 1e4; i++) {
           }
         }
       } else {
-        stock.buy = (stock.buy + income - rent) * (1 + stock_return); // just the stock market now
+        stock.buy = (stock.buy + available - rent) * (1 + stock_return); // just the stock market now
       }
 
       // A new year.
       if (!(month % 12)) {
         property_value_yearly = property_value; // update yearly property value
         rent *= (1 + RENT_INCREASE()); // rent is more expensive
+
         income *= (1 + INCOME_INCREASE); // I make more
+        income_tax += INCOME_TAX_INCREASE; // income tax bump
+        expenses *= (1 + EXPENSES_INCREASE); // more expenses
 
         year += 1; month = 0;
       }
