@@ -8,7 +8,7 @@
       padding: 20px;
     }
     #chart {
-      width: 60%;
+      width: 800px;
       height: 500px;
       border: 1px solid #ddd;
       border-radius: 3px;
@@ -16,62 +16,114 @@
     }
     </style>
     <script src="data.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.11.0/d3.min.js"></script>
-    <script src="http://unpkg.com/frappe-charts@0.0.3/dist/frappe-charts.min.iife.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cash/1.3.5/cash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
     <script>
       $(function() {
         const { data, stats, props } = d;
 
-        const n = 20;
-        const max = Math.max(d3.extent(data.rent)[1], d3.extent(data.buy)[1]);
+        // const n = 20;
+        // const max = Math.max(d3.extent(data.rent)[1], d3.extent(data.buy)[1]);
+        //
+        // const x = d3.scaleLinear().domain([0, max]).nice(n);
+        // const histogram = d3.histogram().domain(x.domain()).thresholds(x.ticks(n));
+        // const bins ={
+        //   rent: histogram(data.rent),
+        //   buy: histogram(data.buy)
+        // };
 
-        const x = d3.scaleLinear().domain([0, max]).nice(n);
-        const histogram = d3.histogram().domain(x.domain()).thresholds(x.ticks(n));
-        const bins ={
-          rent: histogram(data.rent),
-          buy: histogram(data.buy),
-          couch: histogram(data.couch)
-        };
+        // const days = moment(moment(b)).diff(moment(a), 'days');
+        const days = 30 * 365;
 
-        new Chart({
-          parent: "#chart",
-          title: [
-            'INCOME:',
-            numeral(props.income).format('$0.0a'),
-            'HOUSE:',
-            numeral(props.house).format('$0.0a'),
-            'RENT:',
-            numeral(props.rent).format('$0.0a'),
-            '(BOUGHT:',
-            `${stats.bought}×`,
-            'DEFAULTED:',
-            `${stats.defaulted}×)`
-          ].join(' '),
-          data: {
-            labels: bins.rent.map(bin => numeral(bin.x1).format('0.0a')),
-            datasets: [
-              {
-                color: "green",
-                title: "Rent",
-                values: bins.rent.map(bin => bin.length)
-              }, {
-                color: "blue",
-                title: "Buy",
-                values: bins.buy.map(bin => bin.length)
-              }
-              // }, {
-              //   color: "grey",
-              //   title: "Couch",
-              //   values: bins.couch.map(bin => bin.length)
-              // }
-            ]
-          },
-          type: 'line',
-          heatline: 1,
-          height: 500
-        });
+        // Get available space.
+        let height = 500, width = 800;
+        const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 20 };
+        width -= margin.left + margin.right;
+        height -= margin.top + margin.bottom;
+
+        // Scales.
+        const x = d3.time.scale().range([ 0, width ]);
+        const y = d3.scale.linear().range([ height, 0 ]);
+
+        // Axes.
+        const xAxis = d3.svg.axis().scale(x)
+        .orient("bottom")
+        // Show vertical lines...
+        .tickSize(-height)
+        //  tick time format...
+        .tickFormat(d3.time.format((days < 4) ? '' : (days < 14) ? '%a' : (days < 32) ? '%m/%d' : '%b'))
+        //  and give us a spacer.
+        .tickPadding(10);
+
+        const yAxis = d3.svg.axis().scale(y)
+        .orient("left")
+        .tickSize(-width)
+        .ticks(7)
+        .tickPadding(10)
+        .tickFormat(d => `${d}%`);
+
+        // Line generator.
+        const line = d3.svg.line()
+        .interpolate("monotone")
+        .x(o => x(new Date(o.d))) // convert to Date only now
+        .y(o => y(o.m));
+
+        // Get the minimum and maximum date, and % chance of 0 to 100.
+        x.domain([ new Date(a), new Date(b) ]);
+        y.domain([ 0, Math.min(100, maxQ3 + 5) ]).nice();
+
+        // Add an SVG element with the desired dimensions and margin.
+        const svg = d3.select(this.refs.el).append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+
+        const g = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Add the clip path so that lines are not drawn outside of the boundary.
+        g.append("defs")
+        .append("svg:clipPath")
+        .attr("id", "clip")
+        .append("svg:rect")
+        .attr("id", "clip-rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width)
+        .attr("height", height);
+
+        // Add the days x-axis.
+        g.append("g")
+        .attr("class", "x axis day")
+        .attr("transform", `translate(0,${height})`)
+        .call(xAxis);
+
+        // Add the years x-axis?
+        const yrAxis = xAxis
+        .orient("top")
+        .tickSize(height)
+        .tickFormat(d => d.getFullYear())
+        .ticks(days / 365);
+
+        g.append("g")
+        .attr("class", "x axis year")
+        .attr("transform", `translate(0,${height})`)
+        .call(yrAxis)
+        .selectAll("text")
+        .attr("y", 40);
+
+        // Add the y-axis.
+        g.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+        // Add the line paths for each candidate.
+        // _.forOwn(odds, (v, k) => {
+        //   g.append("g")
+        //   .append("path")
+        //   .attr("class", 'median')
+        //   .attr("d", line(v.d));
+        // });
       });
     </script>
   </head>

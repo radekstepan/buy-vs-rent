@@ -65,8 +65,7 @@ const res = {
   },
   data: {
     rent: [],
-    buy: [],
-    couch: []
+    buy: []
   }
 };
 for (let i = 0; i < 1e3; i++) {
@@ -86,7 +85,6 @@ for (let i = 0; i < 1e3; i++) {
       rent: 0,
       buy: 0
     };
-    let couch = 0;
     let paid_off = false; // when is this house paid off?
     let defaulted = false;
     let equity = 0; // amount of monies paid off on mortgage already
@@ -106,7 +104,6 @@ for (let i = 0; i < 1e3; i++) {
 
       let available = (income * (1 - income_tax)) - expenses;
       stock.rent = (stock.rent + available - rent) * (1 + stock_return); // stock in rent condition, simples...
-      couch += available - rent; // stuff it in the couch
 
       property_value *= 1 + PROPERTY_APPRECIATION(); // new property value
 
@@ -173,7 +170,6 @@ for (let i = 0; i < 1e3; i++) {
 
     // Final tally.
     res.data.rent.push(stock.rent);
-    res.data.couch.push(couch);
 
     if (paid_off) {
       res.stats.bought += 1;
@@ -190,7 +186,7 @@ for (let i = 0; i < 1e3; i++) {
 }
 
 // Throw away top and bottom 2.5%
-['rent', 'buy', 'couch'].map(key => {
+['rent', 'buy'].map(key => {
   res.data[key].sort((a,b) => a - b);
   const l = res.data[key].length;
   const low = Math.round(l * 0.025);
