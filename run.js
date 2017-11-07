@@ -32,9 +32,10 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('500k'); // $
+const PROPERTY_VALUE = n('400k'); // $
+const PROPERTY_TYPE = 'apartment'; // [ 'single_family', 'apartment' ]
 const PROPERTY_APPRECIATION = (function() { // monthly rate
-  const d = r('single_family_appreciation_toronto.csv', parseFloat);
+  const d = r(`${PROPERTY_TYPE}_appreciation_toronto.csv`, parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 const PROPERTY_TAX = 0.007; // % of property value yearly
