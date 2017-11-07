@@ -9,16 +9,16 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const INCOME = n('250k'); // $ net yearly income
-const INCOME_INCREASE = 0.03; // % yearly
+const INCOME = n('100k'); // $ net yearly income
+const INCOME_INCREASE = 0.05; // % yearly
 const INCOME_TAX = 0.3; // %
 const INCOME_TAX_INCREASE = 0.0025; // % yearly increase to income tax (higher band etc.)
-const EXPENSES = n('4k'); // monthly expenses
+const EXPENSES = n('2k'); // monthly expenses
 const EXPENSES_INCREASE = 0.02; // % yearly
 
-const SAVINGS = n('100k'); // monies already saved up
+const SAVINGS = n('0'); // monies already saved up
 
-const RENT = n('4k'); // $ monthly
+const RENT = n('2k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 const RENT_INCREASE = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -32,7 +32,7 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('1m'); // $
+const PROPERTY_VALUE = n('500k'); // $
 const PROPERTY_APPRECIATION = (function() { // monthly rate
   const d = r('single_family_appreciation_toronto.csv', parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
@@ -117,8 +117,10 @@ for (let i = 0; i < 1e3; i++) {
 
           // Saved up enough? Buy!
           if (deposit >= deposit_needed) {
-            stock.buy += deposit - deposit_needed; // leftover goes to stock
-            mortgage = property_value * (1 - MORTGAGE_DEPOSIT); // mortgage amount
+            const total = property_value * (1 + PROPERTY_TRANSACTION_FEES);
+            const mortgage_deposit = deposit / total; // TODO buy outright?
+
+            mortgage = property_value * (1 - mortgage_deposit); // mortgage amount
             paid_off = now + (MORTGAGE_TERM * 12);
             property_tax = property_value * PROPERTY_TAX;
           }
