@@ -9,19 +9,19 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const ITERATIONS = 1;
+const ITERATIONS = 1e3;
 const YEARS = 30;
 
-const INCOME = n('100k'); // $ net yearly income
+const INCOME = n('250k'); // $ net yearly income
 const INCOME_INCREASE = 0.05; // % yearly
 const INCOME_TAX = 0.3; // %
 const INCOME_TAX_INCREASE = 0.0025; // % yearly increase to income tax (higher band etc.)
-const EXPENSES = n('2k'); // monthly expenses
+const EXPENSES = n('4k'); // monthly expenses
 const EXPENSES_INCREASE = 0.02; // % yearly
 
-const SAVINGS = n('0'); // monies already saved up
+const SAVINGS = n('100k'); // monies already saved up
 
-const RENT = n('2k'); // $ monthly
+const RENT = n('4k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 const RENT_INCREASE = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -35,8 +35,8 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('400k'); // $
-const PROPERTY_TYPE = 'apartment'; // [ 'single_family', 'apartment' ]
+const PROPERTY_VALUE = n('1m'); // $
+const PROPERTY_TYPE = 'single_family'; // [ 'single_family', 'apartment' ]
 const PROPERTY_APPRECIATION = (function() { // monthly rate
   const d = r(`${PROPERTY_TYPE}_appreciation_toronto.csv`, parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
@@ -74,6 +74,9 @@ const res = {
 };
 for (let i = 0; i < ITERATIONS; i++) {
   (function() {
+    res.data.buy.push([]);
+    res.data.rent.push([]);
+
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
     let property_tax = null;
@@ -170,7 +173,7 @@ for (let i = 0; i < ITERATIONS; i++) {
 
         // Log it.
         let v = stock.rent;
-        res.data.rent.push(v);
+        res.data.rent[i].push(v);
         if (v > res.stats.max) res.stats.max = v;
 
         if (paid_off) {
@@ -182,7 +185,7 @@ for (let i = 0; i < ITERATIONS; i++) {
         } else {
           v = deposit;
         }
-        res.data.buy.push(v);
+        res.data.buy[i].push(v);
         if (v > res.stats.max) res.stats.max = v;
       }
       // Stop after x years automatically.
@@ -191,13 +194,13 @@ for (let i = 0; i < ITERATIONS; i++) {
   })();
 }
 
-// Throw away top and bottom 2.5%
-['rent', 'buy'].map(key => {
-  res.data[key].sort((a,b) => a - b);
-  const l = res.data[key].length;
-  const low = Math.round(l * 0.025);
-  const high = l - low;
-  res.data[key] = res.data[key].slice(low, high);
-});
+// // Throw away top and bottom 2.5%
+// ['rent', 'buy'].map(key => {
+//   res.data[key].sort((a,b) => a - b);
+//   const l = res.data[key].length;
+//   const low = Math.round(l * 0.025);
+//   const high = l - low;
+//   res.data[key] = res.data[key].slice(low, high);
+// });
 
-fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res, null, 2)};`);
+fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res)};`);

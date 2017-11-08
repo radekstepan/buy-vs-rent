@@ -4,15 +4,9 @@
     <meta charset="UTF-8">
     <title>Buy vs Rent</title>
     <style>
-    body {
-      padding: 20px;
-    }
-    #chart {
-      width: 800px;
-      height: 500px;
-      border: 1px solid #ddd;
-      border-radius: 3px;
+    #svg {
       margin: 0 auto;
+      width: 1000px;
     }
     </style>
     <script src="data.js"></script>
@@ -38,12 +32,12 @@
           { label: 'rent', color: '#5e64ff' }
         ];
 
-        let height = 500, width = 800;
-        const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 60 };
+        let height = 800, width = 1000;
+        const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 70 };
         width -= margin.left + margin.right;
         height -= margin.top + margin.bottom;
 
-        const svg = d3.select("svg")
+        const svg = d3.select('svg')
         const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
         const x = d3.scaleLinear()
@@ -55,7 +49,7 @@
           .x((d, i) => x(i + 1))
           .y(d => y(d));
 
-        x.domain([0, props.years]);
+        x.domain([1, props.years]);
         y.domain([0, stats.max]);
 
         g.append("g")
@@ -75,28 +69,34 @@
           .text("Net Worth ($)");
 
         keys.map(k => {
-          g.selectAll(`circle-${k.label}`)
-            .data(d => data[k.label])
-            .enter()
-            .append("circle")
-            .attr("fill", k.color)
-            .attr("r", 2)
-            .attr("cx", (d, i) => x(i + 1))
-            .attr("cy", d => y(d));
+          for (let i = 0; i < props.iterations; i++) {
+            // g.selectAll(`${k.label}-circle-${i}`)
+            //   .data(d => data[k.label][i])
+            //   .enter()
+            //   .append("circle")
+            //   .attr("fill", k.color)
+            //   .attr('fill-opacity', "0.005")
+            //   .attr("r", 2)
+            //   .attr("cx", (d, i) => x(i + 1))
+            //   .attr("cy", d => y(d));
 
-          g.append("path")
-            .datum(data[k.label])
-            .attr("fill", "none")
-            .attr("stroke", k.color)
-            .attr("stroke-linejoin", "round")
-            .attr("stroke-linecap", "round")
-            .attr("stroke-width", 0.5)
-            .attr("d", line);
+            g.append("path")
+              .datum(data[k.label][i])
+              .attr("fill", "none")
+              .attr("stroke", k.color)
+              .attr('stroke-opacity', "0.075")
+              .attr("stroke-linejoin", "round")
+              .attr("stroke-linecap", "round")
+              .attr("stroke-width", 0.5)
+              .attr("d", line);
+          }
         });
       });
     </script>
   </head>
   <body>
-    <svg width="960" height="500"></svg>
+    <div id="svg">
+      <svg height="800" width="1000"></svg>
+    </div>
   </body>
 </html>
