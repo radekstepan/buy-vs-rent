@@ -8,6 +8,18 @@
       margin: 0 auto;
       width: 1000px;
     }
+    #svg .stroke.blue {
+      stroke: #5e64ff;
+    }
+    #svg .stop-color.blue {
+      stop-color: #5e64ff;
+    }
+    #svg .stroke.green {
+      stroke: #28a745;
+    }
+    #svg .stop-color.green {
+      stop-color: #28a745;
+    }
     </style>
     <script src="data.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
@@ -17,22 +29,12 @@
       $(function() {
         const { data, stats, props } = d;
 
-        // const n = 20;
-        // const max = Math.max(d3.extent(data.rent)[1], d3.extent(data.buy)[1]);
-        //
-        // const x = d3.scaleLinear().domain([0, max]).nice(n);
-        // const histogram = d3.histogram().domain(x.domain()).thresholds(x.ticks(n));
-        // const bins ={
-        //   rent: histogram(data.rent),
-        //   buy: histogram(data.buy)
-        // };
-
         const keys = [
-          { label: 'buy', color: '#28a745' },
-          { label: 'rent', color: '#5e64ff' }
+          { label: 'buy', color: 'green' },
+          { label: 'rent', color: 'blue' }
         ];
 
-        let height = 800, width = 1000;
+        let height = 600, width = 1000;
         const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 70 };
         width -= margin.left + margin.right;
         height -= margin.top + margin.bottom;
@@ -70,20 +72,11 @@
 
         keys.map(k => {
           for (let i = 0; i < props.iterations; i++) {
-            // g.selectAll(`${k.label}-circle-${i}`)
-            //   .data(d => data[k.label][i])
-            //   .enter()
-            //   .append("circle")
-            //   .attr("fill", k.color)
-            //   .attr('fill-opacity', "0.005")
-            //   .attr("r", 2)
-            //   .attr("cx", (d, i) => x(i + 1))
-            //   .attr("cy", d => y(d));
-
             g.append("path")
               .datum(data[k.label][i])
               .attr("fill", "none")
-              .attr("stroke", k.color)
+              .attr("class", `stroke ${k.color}`)
+              .attr("style", `stroke: url(#path-fill-gradient-${k.color})`)
               .attr('stroke-opacity', "0.075")
               .attr("stroke-linejoin", "round")
               .attr("stroke-linecap", "round")
@@ -96,7 +89,20 @@
   </head>
   <body>
     <div id="svg">
-      <svg height="800" width="1000"></svg>
+      <svg height="600" width="1000">
+        <defs>
+          <linearGradient id="path-fill-gradient-green">
+            <stop class="stop-color green" offset="0%" stop-opacity="0.2"></stop>
+            <stop class="stop-color green" offset="50%" stop-opacity="0.6"></stop>
+            <stop class="stop-color green" offset="100%" stop-opacity="1"></stop>
+          </linearGradient>
+          <linearGradient id="path-fill-gradient-blue">
+            <stop class="stop-color blue" offset="0%" stop-opacity="0.2"></stop>
+            <stop class="stop-color blue" offset="50%" stop-opacity="0.6"></stop>
+            <stop class="stop-color blue" offset="100%" stop-opacity="1"></stop>
+          </linearGradient>
+        </defs>
+      </svg>
     </div>
   </body>
 </html>
