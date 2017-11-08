@@ -8,6 +8,13 @@
       margin: 0 auto;
       width: 1000px;
     }
+    #svg line,
+    #svg path.domain {
+      stroke: #dadada;
+    }
+    #svg text {
+      fill: #555b51;
+    }
     #svg .stroke.blue {
       stroke: #5e64ff;
     }
@@ -48,41 +55,44 @@
           .rangeRound([height, 0]);
 
         const line = d3.line()
-          .x((d, i) => x(i + 1))
-          .y(d => y(d));
+          .x((d, i) => x(i + 1)) // years
+          .y(d => y(d)); // $
 
         x.domain([1, props.years]);
         y.domain([0, stats.max]);
 
         g.append("g")
           .attr("transform", `translate(0,${height})`)
-          .call(d3.axisBottom(x))
-          .select(".domain")
-          .remove();
+          .call(d3.axisBottom(x).ticks(props.years))
+          .append("text")
+            .attr("x", x(props.years))
+            .attr("y", -10)
+            .attr("dx", "0.71em")
+            .attr("text-anchor", "end")
+            .text("Years");
 
         g.append("g")
-          .call(d3.axisLeft(y))
+          .call(d3.axisLeft(y).tickFormat(d => numeral(d).format('$0.0a')))
           .append("text")
-          .attr("fill", "#000")
-          .attr("transform", "rotate(-90)")
-          .attr("y", 6)
-          .attr("dy", "0.71em")
-          .attr("text-anchor", "end")
-          .text("Net Worth ($)");
+            .attr("transform", "rotate(-90)")
+            .attr("y", 6)
+            .attr("dy", "0.71em")
+            .attr("text-anchor", "end")
+            .text("Net Worth ($)");
 
         keys.map(k => {
-          for (let i = 0; i < props.iterations; i++) {
+          data[k.label].map(datum => {
             g.append("path")
-              .datum(data[k.label][i])
+              .datum(datum)
               .attr("fill", "none")
               .attr("class", `stroke ${k.color}`)
               .attr("style", `stroke: url(#path-fill-gradient-${k.color})`)
-              .attr('stroke-opacity', "0.075")
+              .attr('stroke-opacity', "0.1")
               .attr("stroke-linejoin", "round")
               .attr("stroke-linecap", "round")
               .attr("stroke-width", 0.5)
               .attr("d", line);
-          }
+          });
         });
       });
     </script>
