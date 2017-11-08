@@ -196,11 +196,11 @@ for (let i = 0; i < ITERATIONS; i++) {
 }
 
 // // Throw away top and bottom 5%
-['rent', 'buy'].map(key => {
-  res.data[key].sort((a, b) => a[YEARS] - b[YEARS]);
-  const low = Math.round(ITERATIONS * (CUT / 2));
-  const high = ITERATIONS - low;
-  res.data[key] = res.data[key].slice(low, high);
-});
+// ['rent', 'buy'].map(key => {
+//   res.data[key].sort((a, b) => a[YEARS] - b[YEARS]);
+//   const low = Math.round(ITERATIONS * (CUT / 2));
+//   const high = ITERATIONS - low;
+//   res.data[key] = res.data[key].slice(low, high);
+// });
 
 fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res)};`);
