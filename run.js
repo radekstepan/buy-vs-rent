@@ -9,6 +9,9 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
+const ITERATIONS = 1;
+const YEARS = 30;
+
 const INCOME = n('100k'); // $ net yearly income
 const INCOME_INCREASE = 0.05; // % yearly
 const INCOME_TAX = 0.3; // %
@@ -57,18 +60,19 @@ const res = {
   props: {
     income: INCOME,
     rent: RENT,
-    house: PROPERTY_VALUE
+    house: PROPERTY_VALUE,
+    iterations: ITERATIONS,
+    years: YEARS
   },
   stats: {
-    bought: 0,
-    defaulted: 0,
+    max: -Infinity
   },
   data: {
-    rent: [],
-    buy: []
+    buy: [],
+    rent: []
   }
 };
-for (let i = 0; i < 1e3; i++) {
+for (let i = 0; i < ITERATIONS; i++) {
   (function() {
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
@@ -163,24 +167,26 @@ for (let i = 0; i < 1e3; i++) {
         expenses *= (1 + EXPENSES_INCREASE); // more expenses
 
         year += 1; month = 0;
-      }
-      // Stop after 30 years automatically.
-      if (year > 30) stop = true;
-    }
 
-    // Final tally.
-    res.data.rent.push(stock.rent);
+        // Log it.
+        let v = stock.rent;
+        res.data.rent.push(v);
+        if (v > res.stats.max) res.stats.max = v;
 
-    if (paid_off) {
-      res.stats.bought += 1;
-      if (defaulted) {
-        res.data.buy.push(stock.buy);
-        res.stats.defaulted += 1;
-      } else {
-        res.data.buy.push((property_value * (1 - PROPERTY_TRANSACTION_FEES)) + stock.buy); // TODO assumes house is paid off!
+        if (paid_off) {
+          if (defaulted) {
+            v = stock.buy;
+          } else {
+            v = (property_value * (1 - PROPERTY_TRANSACTION_FEES)) + stock.buy; // TODO assumes house is paid off!
+          }
+        } else {
+          v = deposit;
+        }
+        res.data.buy.push(v);
+        if (v > res.stats.max) res.stats.max = v;
       }
-    } else {
-      res.data.buy.push(deposit);
+      // Stop after x years automatically.
+      if (year > YEARS) stop = true;
     }
   })();
 }
@@ -194,4 +200,4 @@ for (let i = 0; i < 1e3; i++) {
   res.data[key] = res.data[key].slice(low, high);
 });
 
-fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res)};`);
+fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res, null, 2)};`);

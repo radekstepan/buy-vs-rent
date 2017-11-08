@@ -17,7 +17,7 @@
     </style>
     <script src="data.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.11.0/d3.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
     <script>
       $(function() {
@@ -33,101 +33,70 @@
         //   buy: histogram(data.buy)
         // };
 
-        // const days = moment(moment(b)).diff(moment(a), 'days');
-        const days = 30 * 365;
+        const keys = [
+          { label: 'buy', color: '#28a745' },
+          { label: 'rent', color: '#5e64ff' }
+        ];
 
-        // Get available space.
         let height = 500, width = 800;
-        const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 20 };
+        const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 60 };
         width -= margin.left + margin.right;
         height -= margin.top + margin.bottom;
 
-        // Scales.
-        const x = d3.time.scale().range([ 0, width ]);
-        const y = d3.scale.linear().range([ height, 0 ]);
+        const svg = d3.select("svg")
+        const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // Axes.
-        const xAxis = d3.svg.axis().scale(x)
-        .orient("bottom")
-        // Show vertical lines...
-        .tickSize(-height)
-        //  tick time format...
-        .tickFormat(d3.time.format((days < 4) ? '' : (days < 14) ? '%a' : (days < 32) ? '%m/%d' : '%b'))
-        //  and give us a spacer.
-        .tickPadding(10);
+        const x = d3.scaleLinear()
+          .rangeRound([0, width]);
+        const y = d3.scaleLinear()
+          .rangeRound([height, 0]);
 
-        const yAxis = d3.svg.axis().scale(y)
-        .orient("left")
-        .tickSize(-width)
-        .ticks(7)
-        .tickPadding(10)
-        .tickFormat(d => `${d}%`);
+        const line = d3.line()
+          .x((d, i) => x(i + 1))
+          .y(d => y(d));
 
-        // Line generator.
-        const line = d3.svg.line()
-        .interpolate("monotone")
-        .x(o => x(new Date(o.d))) // convert to Date only now
-        .y(o => y(o.m));
-
-        // Get the minimum and maximum date, and % chance of 0 to 100.
-        x.domain([ new Date(a), new Date(b) ]);
-        y.domain([ 0, Math.min(100, maxQ3 + 5) ]).nice();
-
-        // Add an SVG element with the desired dimensions and margin.
-        const svg = d3.select(this.refs.el).append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-
-        const g = svg.append("g")
-        .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        // Add the clip path so that lines are not drawn outside of the boundary.
-        g.append("defs")
-        .append("svg:clipPath")
-        .attr("id", "clip")
-        .append("svg:rect")
-        .attr("id", "clip-rect")
-        .attr("x", 0)
-        .attr("y", 0)
-        .attr("width", width)
-        .attr("height", height);
-
-        // Add the days x-axis.
-        g.append("g")
-        .attr("class", "x axis day")
-        .attr("transform", `translate(0,${height})`)
-        .call(xAxis);
-
-        // Add the years x-axis?
-        const yrAxis = xAxis
-        .orient("top")
-        .tickSize(height)
-        .tickFormat(d => d.getFullYear())
-        .ticks(days / 365);
+        x.domain([0, props.years]);
+        y.domain([0, stats.max]);
 
         g.append("g")
-        .attr("class", "x axis year")
-        .attr("transform", `translate(0,${height})`)
-        .call(yrAxis)
-        .selectAll("text")
-        .attr("y", 40);
+          .attr("transform", `translate(0,${height})`)
+          .call(d3.axisBottom(x))
+          .select(".domain")
+          .remove();
 
-        // Add the y-axis.
         g.append("g")
-        .attr("class", "y axis")
-        .call(yAxis);
+          .call(d3.axisLeft(y))
+          .append("text")
+          .attr("fill", "#000")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", "0.71em")
+          .attr("text-anchor", "end")
+          .text("Net Worth ($)");
 
-        // Add the line paths for each candidate.
-        // _.forOwn(odds, (v, k) => {
-        //   g.append("g")
-        //   .append("path")
-        //   .attr("class", 'median')
-        //   .attr("d", line(v.d));
-        // });
+        keys.map(k => {
+          g.selectAll(`circle-${k.label}`)
+            .data(d => data[k.label])
+            .enter()
+            .append("circle")
+            .attr("fill", k.color)
+            .attr("r", 2)
+            .attr("cx", (d, i) => x(i + 1))
+            .attr("cy", d => y(d));
+
+          g.append("path")
+            .datum(data[k.label])
+            .attr("fill", "none")
+            .attr("stroke", k.color)
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-linecap", "round")
+            .attr("stroke-width", 0.5)
+            .attr("d", line);
+        });
       });
     </script>
   </head>
   <body>
-    <div id="chart"></div>
+    <svg width="960" height="500"></svg>
   </body>
 </html>
