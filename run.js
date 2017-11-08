@@ -138,7 +138,6 @@ for (let i = 0; i < ITERATIONS; i++) {
             if ((now % (5 * 12)) === 0) mortgage_rate = MORTGAGE_RATE(); // adjust mortgage rate after 5 years?
             mortgage_payment = finance.AM(mortgage, mortgage_rate * 100, MORTGAGE_TERM * 12, 1); // monthly repayment
           }
-
           let property_maintenance = (property_value_yearly * PROPERTY_MAINTENANCE) / 12; // property maintenance for this month
 
           available -= mortgage_payment + (property_tax / 12) + property_maintenance; // available to invest
@@ -181,7 +180,8 @@ for (let i = 0; i < ITERATIONS; i++) {
           if (defaulted) {
             v = stock.buy;
           } else {
-            v = (property_value * (1 - PROPERTY_TRANSACTION_FEES)) + stock.buy; // TODO assumes house is paid off!
+            // Property value (less mortgage with equity paid off) and stock.
+            v = (property_value * (1 - PROPERTY_TRANSACTION_FEES)) - mortgage + equity + stock.buy;
           }
         } else {
           v = deposit;
