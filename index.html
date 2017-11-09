@@ -19,6 +19,9 @@
     #svg .stroke.blue {
       stroke: #5e64ff;
     }
+    #svg .fill.blue {
+      fill: #5e64ff;
+    }
     #svg .stop-color.blue {
       stop-color: #5e64ff;
     }
@@ -30,6 +33,9 @@
     }
     #svg .stroke.green {
       stroke: #28a745;
+    }
+    #svg .fill.green {
+      fill: #28a745;
     }
     #svg .stop-color.green {
       stop-color: #28a745;
@@ -65,6 +71,10 @@
         const line = d3.line()
           .x((d, i) => x(i + 1)) // years
           .y(d => y(d)); // $
+        const area = d3.area()
+          .x((d, i) => x(i + 1))
+          .y0(d => y(d[0]))
+          .y1(d => y(d[2]));
 
         x.domain([1, props.years]);
         y.domain([0, Math.max(
@@ -95,17 +105,17 @@
           { label: 'buy', color: 'green' },
           { label: 'rent', color: 'blue' }
         ].map(k => {
-          data[k.label].list.map(datum => {
-            // Individual values.
-            g.append("path")
-              .datum(datum)
-              .attr("fill", "none")
-              .attr("class", `stroke light-${k.color}`)
-              .attr("style", `stroke: url(#path-fill-gradient-light-${k.color})`)
-              .attr('stroke-opacity', "0.1")
-              .attr("stroke-width", 0.5)
-              .attr("d", line);
-          });
+          // data[k.label].list.map(datum => {
+          //   // Individual values.
+          //   g.append("path")
+          //     .datum(datum)
+          //     .attr("fill", "none")
+          //     .attr("class", `stroke light-${k.color}`)
+          //     .attr("style", `stroke: url(#path-fill-gradient-light-${k.color})`)
+          //     .attr('stroke-opacity', "0.1")
+          //     .attr("stroke-width", 0.5)
+          //     .attr("d", line);
+          // });
           // Quantiles.
           [0, 2].map(q => {
             g.append("path")
@@ -115,6 +125,11 @@
               .attr("stroke-width", 1.5)
               .attr("d", line);
           });
+          g.append("path")
+            .datum(data[k.label].quantile)
+            .attr("class", `fill ${k.color}`)
+            .attr("fill-opacity", "0.1")
+            .attr("d", area);
         });
       });
     </script>

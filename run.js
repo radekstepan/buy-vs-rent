@@ -205,7 +205,7 @@ for (let i = 0; i < ITERATIONS; i++) {
       year[i] = res.data[key].list[i][y];
     }
     year.sort(d3.ascending);
-    res.data[key].quantile[y] = [0.05, 0.5, 0.95].map(q => d3.quantile(year, q));
+    res.data[key].quantile[y] = [0.1, 0.5, 0.9].map(q => d3.quantile(year, q));
   }
 });
 
