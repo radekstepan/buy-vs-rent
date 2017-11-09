@@ -22,11 +22,23 @@
     #svg .stop-color.blue {
       stop-color: #5e64ff;
     }
+    #svg .stroke.light-blue {
+      stroke: #7CD6FD;
+    }
+    #svg .stop-color.light-blue {
+      stop-color: #7CD6FD;
+    }
     #svg .stroke.green {
       stroke: #28a745;
     }
     #svg .stop-color.green {
       stop-color: #28a745;
+    }
+    #svg .stroke.light-green {
+      stroke: #98d85b;
+    }
+    #svg .stop-color.light-green {
+      stop-color: #98d85b;
     }
     </style>
     <script src="data.js"></script>
@@ -35,12 +47,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
     <script>
       $(function() {
-        const { data, stats, props } = d;
-
-        const keys = [
-          { label: 'buy', color: 'green' },
-          { label: 'rent', color: 'blue' }
-        ];
+        const { data, props } = d;
 
         let height = 600, width = 1000;
         const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 70 };
@@ -60,7 +67,10 @@
           .y(d => y(d)); // $
 
         x.domain([1, props.years]);
-        y.domain([0, stats.max]);
+        y.domain([0, Math.max(
+          data.buy.quantile[props.years - 1][2],
+          data.rent.quantile[props.years - 1][2]
+        )]); // use Q3 for max value
 
         g.append("g")
           .attr("transform", `translate(0,${height})`)
@@ -81,17 +91,28 @@
             .attr("text-anchor", "end")
             .text("Net Worth ($)");
 
-        keys.map(k => {
-          data[k.label].map(datum => {
+        [
+          { label: 'buy', color: 'green' },
+          { label: 'rent', color: 'blue' }
+        ].map(k => {
+          data[k.label].list.map(datum => {
+            // Individual values.
             g.append("path")
               .datum(datum)
               .attr("fill", "none")
-              .attr("class", `stroke ${k.color}`)
-              .attr("style", `stroke: url(#path-fill-gradient-${k.color})`)
+              .attr("class", `stroke light-${k.color}`)
+              .attr("style", `stroke: url(#path-fill-gradient-light-${k.color})`)
               .attr('stroke-opacity', "0.1")
-              .attr("stroke-linejoin", "round")
-              .attr("stroke-linecap", "round")
               .attr("stroke-width", 0.5)
+              .attr("d", line);
+          });
+          // Quantiles.
+          [0, 2].map(q => {
+            g.append("path")
+              .datum(data[k.label].quantile.map(d => d[q]))
+              .attr("fill", "none")
+              .attr("class", `stroke ${k.color}`)
+              .attr("stroke-width", 1.5)
               .attr("d", line);
           });
         });
@@ -102,15 +123,15 @@
     <div id="svg">
       <svg height="600" width="1000">
         <defs>
-          <linearGradient id="path-fill-gradient-green">
-            <stop class="stop-color green" offset="0%" stop-opacity="0.2"></stop>
-            <stop class="stop-color green" offset="50%" stop-opacity="0.6"></stop>
-            <stop class="stop-color green" offset="100%" stop-opacity="1"></stop>
+          <linearGradient id="path-fill-gradient-light-green">
+            <stop class="stop-color light-green" offset="0%" stop-opacity="0.2"></stop>
+            <stop class="stop-color light-green" offset="50%" stop-opacity="0.6"></stop>
+            <stop class="stop-color light-green" offset="100%" stop-opacity="1"></stop>
           </linearGradient>
-          <linearGradient id="path-fill-gradient-blue">
-            <stop class="stop-color blue" offset="0%" stop-opacity="0.2"></stop>
-            <stop class="stop-color blue" offset="50%" stop-opacity="0.6"></stop>
-            <stop class="stop-color blue" offset="100%" stop-opacity="1"></stop>
+          <linearGradient id="path-fill-gradient-light-blue">
+            <stop class="stop-color light-blue" offset="0%" stop-opacity="0.2"></stop>
+            <stop class="stop-color light-blue" offset="50%" stop-opacity="0.6"></stop>
+            <stop class="stop-color light-blue" offset="100%" stop-opacity="1"></stop>
           </linearGradient>
         </defs>
       </svg>

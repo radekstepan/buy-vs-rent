@@ -1,6 +1,7 @@
 const fs = require('fs');
 const numeral = require('numeral');
 const PD = require('probability-distributions');
+const d3 = require('d3');
 const Finance = require('financejs');
 const finance = new Finance();
 
@@ -11,7 +12,7 @@ const n = val => numeral(val).value();
 
 const ITERATIONS = 1e3;
 const YEARS = 30;
-const CUT = 0.1; // = 5% best/worst results removed
+// const CUT = 0.1; // = 5% best/worst results removed
 
 const INCOME = n('100k'); // $ net yearly income
 const INCOME_INCREASE = 0.05; // % yearly
@@ -65,18 +66,21 @@ const res = {
     iterations: ITERATIONS,
     years: YEARS
   },
-  stats: {
-    max: -Infinity
-  },
   data: {
-    buy: [],
-    rent: []
+    buy: {
+      list: [],
+      quantile: []
+    },
+    rent: {
+      list: [],
+      quantile: []
+    }
   }
 };
 for (let i = 0; i < ITERATIONS; i++) {
   (function() {
-    res.data.buy.push([]);
-    res.data.rent.push([]);
+    res.data.buy.list.push([]);
+    res.data.rent.list.push([]);
 
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
@@ -173,8 +177,7 @@ for (let i = 0; i < ITERATIONS; i++) {
 
         // Log it.
         let v = stock.rent;
-        res.data.rent[i].push(v);
-        if (v > res.stats.max) res.stats.max = v;
+        res.data.rent.list[i].push(v);
 
         if (paid_off) {
           if (defaulted) {
@@ -186,14 +189,25 @@ for (let i = 0; i < ITERATIONS; i++) {
         } else {
           v = deposit;
         }
-        res.data.buy[i].push(v);
-        if (v > res.stats.max) res.stats.max = v;
+        res.data.buy.list[i].push(v);
       }
       // Stop after x years automatically.
       if (year > YEARS) stop = true;
     }
   })();
 }
+
+// Calculate median.
+['buy', 'rent'].map(key => {
+  for (let y = 0; y < YEARS; y++) {
+    const year = [];
+    for (let i = 0; i < ITERATIONS; i++) {
+      year[i] = res.data[key].list[i][y];
+    }
+    year.sort(d3.ascending);
+    res.data[key].quantile[y] = [0.05, 0.5, 0.95].map(q => d3.quantile(year, q));
+  }
+});
 
 // // Throw away top and bottom 5%
 // ['rent', 'buy'].map(key => {
