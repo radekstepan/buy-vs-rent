@@ -14,16 +14,18 @@ const ITERATIONS = 1e3;
 const YEARS = 30;
 // const CUT = 0.1; // = 5% best/worst results removed
 
-const INCOME = n('100k'); // $ net yearly income
-const INCOME_INCREASE = 0.05; // % yearly
+const INFLATION = 0.02; // desired inflation rate set by Bank of Canada
+
+const INCOME = n('250k'); // $ net yearly income
+const INCOME_INCREASE = INFLATION + 0.02; // % yearly
 const INCOME_TAX = 0.3; // %
 const INCOME_TAX_INCREASE = 0.0025; // % yearly increase to income tax (higher band etc.)
-const EXPENSES = n('2k'); // monthly expenses
-const EXPENSES_INCREASE = 0.02; // % yearly
+const EXPENSES = n('4k'); // monthly expenses
+const EXPENSES_INCREASE = INFLATION; // % yearly
 
-const SAVINGS = n('0'); // monies already saved up
+const SAVINGS = n('100k'); // monies already saved up
 
-const RENT = n('2k'); // $ monthly
+const RENT = n('4k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 const RENT_INCREASE = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -37,14 +39,16 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('600k'); // $
-const PROPERTY_TYPE = 'apartment'; // [ 'single_family', 'apartment' ]
+const PROPERTY_VALUE = n('1m'); // $
+const PROPERTY_TYPE = 'single_family'; // [ 'single_family', 'apartment' ]
 const PROPERTY_APPRECIATION = (function() { // monthly rate
+  const toMonthly = yearly => Math.pow(1 + yearly, 1 / 12) - 1;
+  return () => toMonthly(INFLATION);
   const d = r(`${PROPERTY_TYPE}_appreciation_toronto.csv`, parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 const PROPERTY_TAX = 0.007; // % of property value yearly
-const PROPERTY_TAX_INCREASE = 0.03; // % yearly
+const PROPERTY_TAX_INCREASE = INFLATION; // % yearly
 const PROPERTY_MAINTENANCE = 0.015; // % of property value earmarked yearly
 const PROPERTY_TRANSACTION_FEES = 0.06; // % transaction fees to buy/sell
 
@@ -205,7 +209,7 @@ for (let i = 0; i < ITERATIONS; i++) {
       year[i] = res.data[key].list[i][y];
     }
     year.sort(d3.ascending);
-    res.data[key].quantile[y] = [0.1, 0.5, 0.9].map(q => d3.quantile(year, q));
+    res.data[key].quantile[y] = [0.05, 0.5, 0.95].map(q => d3.quantile(year, q));
   }
 });
 
