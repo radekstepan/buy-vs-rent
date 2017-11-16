@@ -12,20 +12,19 @@ const n = val => numeral(val).value();
 
 const ITERATIONS = 1e3;
 const YEARS = 30;
-// const CUT = 0.1; // = 5% best/worst results removed
 
 const INFLATION = 0.02; // desired inflation rate set by Bank of Canada
 
-const INCOME = n('250k'); // $ net yearly income
+const INCOME = n('100k'); // $ net yearly income
 const INCOME_INCREASE = INFLATION + 0.02; // % yearly
 const INCOME_TAX = 0.3; // %
 const INCOME_TAX_INCREASE = 0.0025; // % yearly increase to income tax (higher band etc.)
-const EXPENSES = n('4k'); // monthly expenses
+const EXPENSES = n('2k'); // monthly expenses
 const EXPENSES_INCREASE = INFLATION; // % yearly
 
-const SAVINGS = n('100k'); // monies already saved up
+const SAVINGS = n('10k'); // monies already saved up
 
-const RENT = n('4k'); // $ monthly
+const RENT = n('2k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 const RENT_INCREASE = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -39,20 +38,30 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('1m'); // $
-const PROPERTY_TYPE = 'single_family'; // [ 'single_family', 'apartment' ]
+const PROPERTY_VALUE = n('600k'); // $
+const PROPERTY_TYPE = 'apartment'; // [ 'single_family', 'apartment' ]
 const PROPERTY_APPRECIATION = (function() { // monthly rate
-  const toMonthly = yearly => Math.pow(1 + yearly, 1 / 12) - 1;
-  return () => toMonthly(INFLATION);
-  const d = r(`${PROPERTY_TYPE}_appreciation_toronto.csv`, parseFloat);
-  return () => d[PD.rint(1, 0, d.length - 1).pop()];
+  const r = Math.pow(1 + INFLATION, 1 / 12) - 1;
+  return () => r;
 })();
+// const PROPERTY_APPRECIATION = (function() { // monthly rate
+//   const d = r(`${PROPERTY_TYPE}_appreciation_toronto.csv`, parseFloat);
+//   return () => d[PD.rint(1, 0, d.length - 1).pop()];
+// })();
 const PROPERTY_TAX = 0.007; // % of property value yearly
 const PROPERTY_TAX_INCREASE = INFLATION; // % yearly
 const PROPERTY_MAINTENANCE = 0.015; // % of property value earmarked yearly
 const PROPERTY_TRANSACTION_FEES = 0.06; // % transaction fees to buy/sell
 
-const MORTGAGE_DEPOSIT = 0.2; // % of buy price
+// https://www.ratehub.ca/mortgage-down-payment
+const MORTGAGE_DEPOSIT = (function() { // % of buy price
+  if (PROPERTY_VALUE <= n('1m')) {
+    return (n('25k') + ((PROPERTY_VALUE - n('500k')) * 0.1)) / PROPERTY_VALUE;
+  } else {
+    return 0.2;
+  }
+})();
+
 // https://www.ratehub.ca/5-year-fixed-mortgage-rate-history
 const MORTGAGE_RATE = (function() { // yearly rate
   const d = r('5yr_fixed_mortgage.csv', parseFloat);
@@ -201,7 +210,7 @@ for (let i = 0; i < ITERATIONS; i++) {
   })();
 }
 
-// Calculate median.
+// Calculate quantiles.
 ['buy', 'rent'].map(key => {
   for (let y = 0; y < YEARS; y++) {
     const year = [];
@@ -212,13 +221,5 @@ for (let i = 0; i < ITERATIONS; i++) {
     res.data[key].quantile[y] = [0.05, 0.5, 0.95].map(q => d3.quantile(year, q));
   }
 });
-
-// // Throw away top and bottom 5%
-// ['rent', 'buy'].map(key => {
-//   res.data[key].sort((a, b) => a[YEARS] - b[YEARS]);
-//   const low = Math.round(ITERATIONS * (CUT / 2));
-//   const high = ITERATIONS - low;
-//   res.data[key] = res.data[key].slice(low, high);
-// });
 
 fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res)};`);
