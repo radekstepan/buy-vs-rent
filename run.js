@@ -10,7 +10,7 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const ITERATIONS = 1e3;
+const ITERATIONS = 1;
 const YEARS = 30;
 
 const INFLATION = 0.02; // desired inflation rate set by Bank of Canada
@@ -38,7 +38,7 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('600k'); // $
+const PROPERTY_VALUE = n('750k'); // $
 const PROPERTY_TYPE = 'apartment'; // [ 'single_family', 'apartment' ]
 const PROPERTY_APPRECIATION = (function() { // monthly rate
   const r = Math.pow(1 + INFLATION, 1 / 12) - 1;
@@ -54,13 +54,25 @@ const PROPERTY_MAINTENANCE = 0.015; // % of property value earmarked yearly
 const PROPERTY_TRANSACTION_FEES = 0.06; // % transaction fees to buy/sell
 
 // https://www.ratehub.ca/mortgage-down-payment
-const MORTGAGE_DEPOSIT = (function() { // % of buy price
-  if (PROPERTY_VALUE <= n('1m')) {
-    return (n('25k') + ((PROPERTY_VALUE - n('500k')) * 0.1)) / PROPERTY_VALUE;
+const MORTGAGE_DEPOSIT = function(property_value) { // % of buy price
+  if (property_value <= n('1m')) {
+    return (n('25k') + ((property_value - n('500k')) * 0.1)) / property_value;
   } else {
     return 0.2;
   }
-})();
+};
+const MORTGAGE_INSURANCE = function(mortgage_deposit) {
+  switch (true) {
+    case mortgage_deposit < 0.1:
+      return 0.04;
+    case mortgage_deposit < 0.15:
+      return 0.031;
+    case mortgage_deposit < 0.2:
+      return 0.028;
+    default:
+      return 0;
+  }
+};
 
 // https://www.ratehub.ca/5-year-fixed-mortgage-rate-history
 const MORTGAGE_RATE = (function() { // yearly rate
@@ -135,16 +147,30 @@ for (let i = 0; i < ITERATIONS; i++) {
       if (!defaulted) {
         // Saving for house deposit.
         if (!paid_off) {
-          let deposit_needed = property_value * (MORTGAGE_DEPOSIT + PROPERTY_TRANSACTION_FEES); // this is how much I need to save
+          const deposit_amount = MORTGAGE_DEPOSIT(property_value);
+          const cmhc_insurance = MORTGAGE_INSURANCE(property_value);
+          const deposit_needed = property_value * (deposit_amount + cmhc_insurance + PROPERTY_TRANSACTION_FEES); // this is how much I need to save
           deposit += available - rent; // saved up more
 
           // Saved up enough? Buy!
           if (deposit >= deposit_needed) {
-            const total = property_value * (1 + PROPERTY_TRANSACTION_FEES);
-            const mortgage_deposit = deposit / total; // TODO buy outright?
+            const total = property_value * (1 + cmhc_insurance + PROPERTY_TRANSACTION_FEES);
+            const remainder = deposit / total; // TODO buy outright?
 
-            mortgage = property_value * (1 - mortgage_deposit); // mortgage amount
+            mortgage = property_value * (1 - remainder); // mortgage amount
             paid_off = now + (MORTGAGE_TERM * 12);
+
+            console.log([
+              `property value: ${property_value}`,
+              `deposit %: ${deposit_amount}`,
+              `insurance: ${cmhc_insurance}`,
+              `deposit needed: ${deposit_needed}`,
+              `deposit saved up: ${deposit}`,
+              `total: ${total}`,
+              `remainder: ${remainder}`,
+              `mortgage: ${mortgage}`
+            ].join('\n'));
+
             property_tax = property_value * PROPERTY_TAX;
           }
         } else {
