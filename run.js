@@ -10,7 +10,7 @@ const n = val => numeral(val).value();
 
 // ------------------------
 
-const ITERATIONS = 1;
+const ITERATIONS = 1e3;
 const YEARS = 30;
 
 const INFLATION = 0.02; // desired inflation rate set by Bank of Canada
@@ -38,7 +38,7 @@ const STOCK_RETURN = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-const PROPERTY_VALUE = n('750k'); // $
+const PROPERTY_VALUE = n('400k'); // $
 const PROPERTY_TYPE = 'apartment'; // [ 'single_family', 'apartment' ]
 const PROPERTY_APPRECIATION = (function() { // monthly rate
   const r = Math.pow(1 + INFLATION, 1 / 12) - 1;
@@ -61,14 +61,15 @@ const MORTGAGE_DEPOSIT = function(property_value) { // % of buy price
     return 0.2;
   }
 };
-const MORTGAGE_INSURANCE = function(mortgage_deposit) {
+const MORTGAGE_INSURANCE = function(property_value, mortgage_deposit) {
+  const mortgage = property_value * (1 - mortgage_deposit);
   switch (true) {
     case mortgage_deposit < 0.1:
-      return 0.04;
+      return mortgage * 0.04;
     case mortgage_deposit < 0.15:
-      return 0.031;
+      return mortgage * 0.031;
     case mortgage_deposit < 0.2:
-      return 0.028;
+      return mortgage * 0.028;
     default:
       return 0;
   }
@@ -148,30 +149,16 @@ for (let i = 0; i < ITERATIONS; i++) {
         // Saving for house deposit.
         if (!paid_off) {
           const deposit_amount = MORTGAGE_DEPOSIT(property_value);
-          const cmhc_insurance = MORTGAGE_INSURANCE(property_value);
-          const deposit_needed = property_value * (deposit_amount + cmhc_insurance + PROPERTY_TRANSACTION_FEES); // this is how much I need to save
+          const cmhc_insurance = MORTGAGE_INSURANCE(property_value, deposit_amount);
+          const deposit_needed = property_value * (deposit_amount + PROPERTY_TRANSACTION_FEES); // this is how much I need to save
           deposit += available - rent; // saved up more
 
           // Saved up enough? Buy!
           if (deposit >= deposit_needed) {
-            const total = property_value * (1 + cmhc_insurance + PROPERTY_TRANSACTION_FEES);
-            const remainder = deposit / total; // TODO buy outright?
-
-            mortgage = property_value * (1 - remainder); // mortgage amount
+            mortgage = cmhc_insurance - (deposit - deposit_needed) + (property_value * (1 - deposit_amount));
             paid_off = now + (MORTGAGE_TERM * 12);
-
-            console.log([
-              `property value: ${property_value}`,
-              `deposit %: ${deposit_amount}`,
-              `insurance: ${cmhc_insurance}`,
-              `deposit needed: ${deposit_needed}`,
-              `deposit saved up: ${deposit}`,
-              `total: ${total}`,
-              `remainder: ${remainder}`,
-              `mortgage: ${mortgage}`
-            ].join('\n'));
-
             property_tax = property_value * PROPERTY_TAX;
+            equity -= cmhc_insurance;
           }
         } else {
           let mortgage_payment = 0;
