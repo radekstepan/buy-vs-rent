@@ -3,69 +3,13 @@
   <head>
     <meta charset="UTF-8">
     <title>Buy vs Rent</title>
-    <style>
-    #svg {
-      margin: 0 auto;
-      width: 1000px;
-    }
-    #svg line,
-    #svg path.domain {
-      stroke: #dadada;
-      shape-rendering: crispEdges;
-    }
-    #svg text {
-      fill: #555b51;
-    }
-    #svg .stroke.blue {
-      stroke: #5e64ff;
-    }
-    #svg .fill.blue {
-      fill: #5e64ff;
-    }
-    #svg .stop-color.blue {
-      stop-color: #5e64ff;
-    }
-    #svg .stroke.light-blue {
-      stroke: #7CD6FD;
-    }
-    #svg .stop-color.light-blue {
-      stop-color: #7CD6FD;
-    }
-    #svg .stroke.green {
-      stroke: #28a745;
-    }
-    #svg .fill.green {
-      fill: #28a745;
-    }
-    #svg .stop-color.green {
-      stop-color: #28a745;
-    }
-    #svg .stroke.light-green {
-      stroke: #98d85b;
-    }
-    #svg .stop-color.light-green {
-      stop-color: #98d85b;
-    }
-    .neptune { /* Wealthsimple green */
-      #7cb7b6;
-    }
-    .wealthbar { /* Wealthbar green */
-      #00b298;
-    }
-    .grandis { /* Wealthsimple yellow light */
-      #fed37c;
-    }
-    .tainoi { /* Wealthsimple yellow medium */
-      #fec75c;
-    }
-    .sunglow { /* Wealthsimple yellow dark */
-      #febb34;
-    }
-    </style>
+
+    <link rel="stylesheet/less" type="text/css" href="styles.less" />
     <script src="data.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.11.0/d3.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/less.js/2.7.3/less.min.js"></script>
     <script>
       $(function() {
         const { data, props } = d;
@@ -117,8 +61,8 @@
             .text("Net Worth ($)");
 
         [
-          { label: 'buy', color: 'green' },
-          { label: 'rent', color: 'blue' }
+          { label: 'buy', color: 'neptune' },
+          { label: 'rent', color: 'sunglow' }
         ].map(k => {
           // data[k.label].list.map(datum => {
           //   // Individual values.
@@ -151,20 +95,7 @@
   </head>
   <body>
     <div id="svg">
-      <svg height="600" width="1000">
-        <defs>
-          <linearGradient id="path-fill-gradient-light-green">
-            <stop class="stop-color light-green" offset="0%" stop-opacity="0.2"></stop>
-            <stop class="stop-color light-green" offset="50%" stop-opacity="0.6"></stop>
-            <stop class="stop-color light-green" offset="100%" stop-opacity="1"></stop>
-          </linearGradient>
-          <linearGradient id="path-fill-gradient-light-blue">
-            <stop class="stop-color light-blue" offset="0%" stop-opacity="0.2"></stop>
-            <stop class="stop-color light-blue" offset="50%" stop-opacity="0.6"></stop>
-            <stop class="stop-color light-blue" offset="100%" stop-opacity="1"></stop>
-          </linearGradient>
-        </defs>
-      </svg>
+      <svg height="600" width="1000"></svg>
     </div>
   </body>
 </html>

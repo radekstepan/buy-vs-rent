@@ -1,0 +1,38 @@
+#svg {
+  margin: 0 auto;
+  width: 1000px;
+
+  line,
+  path.domain {
+    stroke: #dadada;
+    shape-rendering: crispEdges;
+  }
+
+  text {
+    fill: #555b51;
+  }
+
+  .color(@name, @hex) {
+    .@{name} {
+      &.stroke {
+        stroke: @hex;
+      }
+      &.fill {
+        fill: @hex;
+      }
+      &.stop-color {
+        stop-color: @hex;
+      }
+    }
+  }
+
+  .color(blue, #5e64ff);
+  .color(lightblue, #7cd6fd);
+  .color(green, #28a745);
+  .color(lightgreen, #98d85b);
+  .color(neptune, #7cb7b6); // Wealthsimple green
+  .color(wealthbar, #00b298); // Wealthbar green
+  .color(grandis, #fed37c); // Wealthsimple yellow light
+  .color(tainoi, #fec75c); // Wealthsimple yellow medium
+  .color(sunglow, #febb34); // Wealthsimple yellow dark
+}
