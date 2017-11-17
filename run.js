@@ -93,20 +93,16 @@ const res = {
     years: YEARS
   },
   data: {
-    buy: {
-      list: [],
-      quantile: []
-    },
-    rent: {
-      list: [],
-      quantile: []
-    }
+    buy: [],
+    rent: []
   }
 };
+res.data.buy.iterations = [];
+res.data.rent.iterations = [];
 for (let i = 0; i < ITERATIONS; i++) {
   (function() {
-    res.data.buy.list.push([]);
-    res.data.rent.list.push([]);
+    res.data.buy.iterations.push([]);
+    res.data.rent.iterations.push([]);
 
     let property_value = PROPERTY_VALUE; // house value right now
     let property_value_yearly = PROPERTY_VALUE; // yearly house price
@@ -203,7 +199,7 @@ for (let i = 0; i < ITERATIONS; i++) {
 
         // Log it.
         let v = stock.rent;
-        res.data.rent.list[i].push(v);
+        res.data.rent.iterations[i].push(Math.round(v));
 
         if (paid_off) {
           if (defaulted) {
@@ -215,7 +211,7 @@ for (let i = 0; i < ITERATIONS; i++) {
         } else {
           v = deposit;
         }
-        res.data.buy.list[i].push(v);
+        res.data.buy.iterations[i].push(Math.round(v));
       }
       // Stop after x years automatically.
       if (year > YEARS) stop = true;
@@ -228,11 +224,12 @@ for (let i = 0; i < ITERATIONS; i++) {
   for (let y = 0; y < YEARS; y++) {
     const year = [];
     for (let i = 0; i < ITERATIONS; i++) {
-      year[i] = res.data[key].list[i][y];
+      year[i] = res.data[key].iterations[i][y];
     }
     year.sort(d3.ascending);
-    res.data[key].quantile[y] = [0.05, 0.5, 0.95].map(q => d3.quantile(year, q));
+    res.data[key][y] = [0.05, 0.5, 0.95].map(q => d3.quantile(year, q));
   }
+  delete res.data[key].iterations;
 });
 
-fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res)};`);
+fs.writeFileSync('./data.js', `const d = ${JSON.stringify(res, null, 2)};`);

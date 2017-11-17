@@ -37,8 +37,8 @@
 
         x.domain([1, props.years]);
         y.domain([0, Math.max(
-          data.buy.quantile[props.years - 1][2],
-          data.rent.quantile[props.years - 1][2]
+          data.buy[props.years - 1][2],
+          data.rent[props.years - 1][2]
         )]); // use Q3 for max value
 
         g.append("g")
@@ -64,28 +64,17 @@
           { label: 'buy', color: 'neptune' },
           { label: 'rent', color: 'sunglow' }
         ].map(k => {
-          // data[k.label].list.map(datum => {
-          //   // Individual values.
-          //   g.append("path")
-          //     .datum(datum)
-          //     .attr("fill", "none")
-          //     .attr("class", `stroke light-${k.color}`)
-          //     .attr("style", `stroke: url(#path-fill-gradient-light-${k.color})`)
-          //     .attr('stroke-opacity', "0.1")
-          //     .attr("stroke-width", 0.5)
-          //     .attr("d", line);
-          // });
           // Quantiles.
           [0, 2].map(q => {
             g.append("path")
-              .datum(data[k.label].quantile.map(d => d[q]))
+              .datum(data[k.label].map(d => d[q]))
               .attr("fill", "none")
               .attr("class", `stroke ${k.color}`)
               .attr("stroke-width", 1.5)
               .attr("d", line);
           });
           g.append("path")
-            .datum(data[k.label].quantile)
+            .datum(data[k.label])
             .attr("class", `fill ${k.color}`)
             .attr("fill-opacity", "0.1")
             .attr("d", area);
