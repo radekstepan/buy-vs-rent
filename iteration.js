@@ -18,6 +18,7 @@ module.exports = (opts, emit) => {
     rent: 0,
     buy: 0
   };
+  let bought = null; // when did I buy?
   let paid_off = false; // when is this house paid off?
   let defaulted = false;
   let equity = 0; // amount of monies paid off on mortgage already
@@ -51,6 +52,7 @@ module.exports = (opts, emit) => {
         // Saved up enough? Buy!
         if (deposit >= deposit_needed) {
           mortgage = cmhc_insurance - (deposit - deposit_needed) + (property_value * (1 - deposit_amount));
+          bought = now;
           paid_off = now + (mortgage_term * 12);
           property_tax = property_value * opts.property_tax;
           equity -= cmhc_insurance;
@@ -60,7 +62,9 @@ module.exports = (opts, emit) => {
 
         // Paying off mortgage?
         if (paid_off > now) {
-          if ((now % (5 * 12)) === 0) mortgage_rate = opts.mortgage_rate(); // adjust mortgage rate after 5 years?
+          if (((now - bought) % (5 * 12)) === 0) { // adjust mortgage rate after 5 years?
+            mortgage_rate = opts.mortgage_rate();
+          }
           mortgage_payment = opts.mortgage_payment(mortgage, mortgage_rate, mortgage_term);
         }
         const maint = (property_value_yearly * property_maintenance) / 12; // property maintenance for this month
