@@ -9,7 +9,14 @@ const invest = (obj, amount, stock_return, income_tax) => {
 };
 
 module.exports = (opts, emit) => {
-  ['property_appreciation','mortgage_deposit', 'mortgage_insurance'].map(key => opts[key] = fn(opts, key));
+  [
+    'property_appreciation',
+    'mortgage_deposit',
+    'mortgage_insurance',
+    'mortgage_rate',
+    'stock_return',
+    'rent_increase'
+  ].map(key => opts[key] = fn(opts, key));
 
   let property_value = opts.property_value; // house value right now
   let property_value_yearly = opts.property_value; // yearly house price
@@ -56,16 +63,14 @@ module.exports = (opts, emit) => {
           bought = now;
           paid_off = now + (opts.mortgage_term * 12);
           property_tax = property_value * opts.property_tax;
-          equity -= cmhc_insurance;
+          equity = 0;
+          mortgage_rate = opts.mortgage_rate();
         }
       } else {
         let mortgage_payment = 0;
 
         // Paying off mortgage?
         if (paid_off > now) {
-          if (!mortgage_rate) {
-            mortgage_rate = opts.mortgage_rate();
-          }
           if (((now - bought) % (5 * 12)) === 0) { // adjust mortgage rate after 5 years?
             mortgage_rate = opts.mortgage_rate();
           }
@@ -74,7 +79,6 @@ module.exports = (opts, emit) => {
         const maint = (property_value_yearly * opts.property_maintenance) / 12; // property maintenance for this month
 
         available -= mortgage_payment + (property_tax / 12) + maint; // available to invest
-        equity += mortgage_payment;
 
         // Can't pay up?
         if (available < 0) {
@@ -86,7 +90,8 @@ module.exports = (opts, emit) => {
           invest(stock.buy, sale, stock_return, income_tax);
           defaulted = true;
         } else {
-          invest(stock.buy, available, stock_return, income_tax);
+          equity += mortgage_payment; // had enough to pay mortgage payment
+          invest(stock.buy, available, stock_return, income_tax); // the rest goes to stock
         }
       }
     } else {
