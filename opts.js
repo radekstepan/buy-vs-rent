@@ -21,6 +21,8 @@ opts.income_tax_increase = 0.0025; // % yearly increase to income tax (higher ba
 opts.expenses = n('2k'); // monthly expenses
 opts.expenses_increase = opts.inflation; // % yearly
 
+opts.rrsp_allowance = 0.18; // % yearly
+
 opts.savings = n('10k'); // monies already saved up
 
 opts.rent = n('2k'); // $ monthly

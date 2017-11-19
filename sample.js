@@ -2,10 +2,14 @@
 const fn = (obj, key) => typeof obj[key] === 'function' ? obj[key] : () => 0;
 
 // Invest on stock market and update totals.
-const invest = (obj, amount, stock_return, income_tax) => {
-  obj[0] += amount; // more money invested
-  obj[1] = ((obj[0] + obj[1]) * (1 + stock_return)) - obj[0]; // the new profit
-  obj[2] = obj[1] > 0 ? obj[1] * (1 - income_tax) : obj[1] // the running after tax profit
+const invest = (obj, amount, stock_return, income, income_tax, rrsp_allowance) => {
+  obj.personal.invested += amount; // more money invested
+  obj.personal.balance = ((obj.personal.invested + obj.personal.balance) * (1 + stock_return)) - obj.personal.invested; // the new profit
+  if (obj.personal.balance > 0) {
+    obj.personal.balance_after_tax = obj.personal.balance * (1 - income_tax); // the running after tax profit
+  } else {
+    obj.personal.balance_after_tax = obj.personal.balance; // the running after tax profit
+  }
 };
 
 module.exports = (opts, emit) => {
@@ -25,16 +29,26 @@ module.exports = (opts, emit) => {
   let income = opts.income / 12; // monthly income for this year
   let income_tax = opts.income_tax; // income tax for this year
   let expenses = opts.expenses; // monthly expenses for this year
+  const rrsp_allowance = opts.rrsp_allowance || 0; // % yearly
 
   let rent = opts.rent; // monthly rent for this year
   let mortgage = null;
   let mortgage_rate = null;
 
   let deposit = opts.savings || 0; // $ deposit saved so far
-  let stock = { // stock market balance
-    rent: [0, 0, 0, 0], // yearly deposited, yearly balance, yearly after tax, after tax previous year
-    buy: [0, 0, 0, 0]
-  };
+  const stock = {};
+  ['rent', 'buy'].map(i => {
+    stock[i] = {};
+    ['personal', 'rrsp'].map(j => {
+      stock[i][j] = {
+        invested: 0,
+        balance: 0,
+        balance_after_tax: 0,
+        total: 0
+      };
+    });
+  });
+
   let bought = null; // when did I buy?
   let paid_off = false; // when is this house paid off?
   let defaulted = false;
@@ -90,7 +104,7 @@ module.exports = (opts, emit) => {
           if (paid_off > now) {
             sale -= mortgage - equity; // haven't paid off mortgage yet
           }
-          invest(stock.buy, sale, stock_return, income_tax);
+          invest(stock.buy, sale, stock_return, income, income_tax, rrsp_allowance);
           defaulted = true;
           emit(month, 'buy:default', {
             mortgage,
@@ -99,11 +113,11 @@ module.exports = (opts, emit) => {
           });
         } else {
           equity += mortgage_payment; // had enough to pay mortgage payment
-          invest(stock.buy, available, stock_return, income_tax); // the rest goes to stock
+          invest(stock.buy, available, stock_return, income, income_tax, rrsp_allowance); // the rest goes to stock
         }
       }
     } else {
-      invest(stock.buy, available - rent, stock_return, income_tax); // just the stock market now
+      invest(stock.buy, available - rent, stock_return, income, income_tax, rrsp_allowance); // just the stock market now
     }
   };
 
@@ -118,7 +132,7 @@ module.exports = (opts, emit) => {
     const available = (income * (1 - income_tax)) - expenses;
 
     // Pay rent and invest on stock market.
-    invest(stock.rent, available - rent, stock_return, income_tax);
+    invest(stock.rent, available - rent, stock_return, income, income_tax, rrsp_allowance);
 
     // Buy condition.
     opts.property_value && buy(available, stock_return);
@@ -136,21 +150,21 @@ module.exports = (opts, emit) => {
 
       year += 1; month = 0;
 
-      ['rent', 'buy'].map(key => {
-        stock[key][3] += stock[key][0] + stock[key][2]; // update total stock
-        [0, 1, 2].map(i => stock[key][i] = 0); // reset
+      ['rent', 'buy'].map(i => {
+        stock[i].personal.total += stock[i].personal.invested + stock[i].personal.balance_after_tax; // update total stock
+        ['invested', 'balance', 'balance_after_tax'].map(k => stock[i].personal[k] = 0); // reset
       });
 
       // Log it.
-      let v = stock.rent[3];
+      let v = stock.rent.personal.total;
       emit(month, 'rent:net_worth', v);
 
       if (paid_off) {
         if (defaulted) {
-          v = stock.buy[3];
+          v = stock.buy.personal.total;
         } else {
           // Property value (less mortgage with equity paid off) and stock.
-          v = (property_value * (1 - opts.property_transaction_fees)) - mortgage + equity + stock.buy[3];
+          v = (property_value * (1 - opts.property_transaction_fees)) - mortgage + equity + stock.buy.personal.total;
         }
       } else {
         v = deposit;
