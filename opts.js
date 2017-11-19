@@ -38,15 +38,13 @@ opts.stock_return = (function() { // yearly rate
 })();
 
 opts.property_value = n('500k'); // $
-// opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
+opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
 opts.property_appreciation = (function() { // monthly rate
   const r = Math.pow(1 + opts.inflation, 1 / 12) - 1; // rise with inflation
   return () => r;
+  // const d = r(`${opts.property_type}_appreciation_toronto.csv`, parseFloat);
+  // return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
-// opts.property_appreciation = (function() { // monthly rate
-//   const d = r(`${opts.property_type}_appreciation_toronto.csv`, parseFloat);
-//   return () => d[PD.rint(1, 0, d.length - 1).pop()];
-// })();
 opts.property_tax = 0.007; // % of property value yearly
 opts.property_tax_increase = opts.inflation; // % yearly
 opts.property_maintenance = 0.015; // % of property value earmarked yearly
@@ -76,6 +74,7 @@ opts.mortgage_insurance = function(property_value, mortgage_deposit) {
 
 // https://www.ratehub.ca/5-year-fixed-mortgage-rate-history
 opts.mortgage_rate = (function() { // yearly rate
+  // return () => 0.075;
   const d = r('5yr_fixed_mortgage.csv', parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
