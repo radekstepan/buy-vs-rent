@@ -93,11 +93,13 @@
           { label: 'rent', color: 'sunglow' }
         ].map(k => {
           // Quantiles.
-          [0, 2].map(q => {
+          [0, 1, 2].map(q => {
             g.append("path")
               .datum(data[k.label].map(d => d[q]))
               .attr("fill", "none")
               .attr("class", `stroke ${k.color}`)
+              .attr("stroke-dasharray", q === 1 ? '5, 10' : 0) // median?
+              .attr("stroke-opacity", q === 1 ? 0.6 : 1)
               .attr("stroke-width", 1.5)
               .attr("d", line);
           });
