@@ -65,6 +65,9 @@ module.exports = (opts, emit) => {
           property_tax = property_value * opts.property_tax;
           equity = 0;
           mortgage_rate = opts.mortgage_rate();
+          emit(month, 'buy:purchase', {
+            mortgage,
+          });
         }
       } else {
         let mortgage_payment = 0;
@@ -89,6 +92,11 @@ module.exports = (opts, emit) => {
           }
           invest(stock.buy, sale, stock_return, income_tax);
           defaulted = true;
+          emit(month, 'buy:default', {
+            mortgage,
+            mortgage_rate,
+            mortgage_payment
+          });
         } else {
           equity += mortgage_payment; // had enough to pay mortgage payment
           invest(stock.buy, available, stock_return, income_tax); // the rest goes to stock

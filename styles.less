@@ -1,6 +1,7 @@
-#svg {
+#app {
   margin: 0 auto;
   width: 1000px;
+  font-family: 'sans-serif';
 
   line,
   path.domain {
@@ -10,6 +11,15 @@
 
   text {
     fill: #555b51;
+  }
+  table {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #555b51;
+
+    td {
+      padding-right: 10px;
+    }
   }
 
   .color(@name, @hex) {
@@ -30,6 +40,7 @@
   .color(lightblue, #7cd6fd);
   .color(green, #28a745);
   .color(lightgreen, #98d85b);
+  .color(red, #ff5858);
   .color(neptune, #7cb7b6); // Wealthsimple green
   .color(wealthbar, #00b298); // Wealthbar green
   .color(grandis, #fed37c); // Wealthsimple yellow light

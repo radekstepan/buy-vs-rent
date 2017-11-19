@@ -6,16 +6,42 @@
 
     <link rel="stylesheet/less" type="text/css" href="styles.less" />
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-JavaScript-Templates/3.11.0/js/tmpl.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.11.0/d3.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/less.js/2.7.3/less.min.js"></script>
   </head>
   <body>
-    <div id="svg">
+    <div id="app">
       <svg height="600" width="1000"></svg>
+      <div class="table"></div>
     </div>
+    <script type="text/x-tmpl" id="table">
+      <table>
+        <tr><td>Income:</td><td>{%= numeral(o.opts.income).format('$0.0a') %}</td></tr>
+        <tr><td>Property value:</td><td>{%= numeral(o.opts.property_value).format('$0.0a') %}</td></tr>
+        <tr><td>Samples:</td><td>{%= o.opts.samples %}</td></tr>
+
+        {% if (o.purchase.rate) { %}
+          <tr>
+            <td>Property purchases:</td>
+            <td>{%= o.purchase.rate %}% (mortgage &asymp; {%= numeral(o.purchase.mortgage).format('$0.0a') %})</td>
+          </tr>
+        {% } %}
+        {% if (o.defaults.rate) { %}
+          <tr>
+            <td>Mortgage defaults:</td>
+            <td>{%= o.defaults.rate %}% (> {%= 100 * o.defaults.mortgage_rate %}%)</td>
+          </tr>
+        {% } %}
+      </table>
+    </script>
     <script>
-      d3.json('data.json', (data) => {
+      d3.json(`data.json?${+new Date}`, (data) => {
+        // Table.
+        document.querySelector('.table').innerHTML = tmpl('table', data);
+
+        // Chart.
         let height = 600, width = 1000;
         const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 70 };
         width -= margin.left + margin.right;
@@ -37,18 +63,17 @@
           .y0(d => y(d[0]))
           .y1(d => y(d[2]));
 
-        // TODO hardcoded
-        x.domain([1, 30]);
+        x.domain([1, data.opts.years]);
         y.domain([0, Math.max(
-          data.buy[30 - 1][2],
-          data.rent[30 - 1][2]
+          data.buy[data.opts.years - 1][2],
+          data.rent[data.opts.years - 1][2]
         )]); // use Q3 for max value
 
         g.append("g")
           .attr("transform", `translate(0,${height})`)
-          .call(d3.axisBottom(x).ticks(30))
+          .call(d3.axisBottom(x).ticks(data.opts.years))
           .append("text")
-            .attr("x", x(30))
+            .attr("x", x(data.opts.years))
             .attr("y", -10)
             .attr("dx", "0.71em")
             .attr("text-anchor", "end")
@@ -64,7 +89,7 @@
             .text("Net Worth ($)");
 
         [
-          { label: 'buy', color: 'neptune' },
+          { label: 'buy', color: data.defaults.rate > 20 ? 'red' : 'neptune' },
           { label: 'rent', color: 'sunglow' }
         ].map(k => {
           // Quantiles.

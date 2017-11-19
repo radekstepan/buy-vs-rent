@@ -1,6 +1,6 @@
 const tap = require('tap');
 
-const iteration = require('../iteration');
+const sample = require('../sample');
 
 const opts = {
   iterations: 1,
@@ -13,7 +13,7 @@ const opts = {
   stock_return: () => 0.1,
 };
 
-iteration(opts, (time, key, val) => {
+sample(opts, (time, key, val) => {
   if (key === 'rent:net_worth') {
     tap.equal(Math.round(val), 1566);
   }

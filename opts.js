@@ -9,7 +9,7 @@ const r = (name, map) => fs.readFileSync(`./data/${name}`, 'utf-8').split('\n').
 
 const opts = {};
 
-opts.iterations = 1e3;
+opts.samples = 1e3;
 opts.years = 30;
 
 opts.inflation = 0.02; // desired inflation rate set by Bank of Canada
@@ -40,7 +40,7 @@ opts.stock_return = (function() { // yearly rate
 opts.property_value = n('500k'); // $
 // opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
 opts.property_appreciation = (function() { // monthly rate
-  const r = Math.pow(1 + opts.inflation, 1 / 12) - 1;
+  const r = Math.pow(1 + opts.inflation, 1 / 12) - 1; // rise with inflation
   return () => r;
 })();
 // opts.property_appreciation = (function() { // monthly rate
