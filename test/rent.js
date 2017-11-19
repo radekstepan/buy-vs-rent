@@ -15,6 +15,6 @@ const opts = {
 
 iteration(opts, (time, key, val) => {
   if (key === 'rent:net_worth') {
-    tap.equal(Math.round(val), 1567);
+    tap.equal(Math.round(val), 1566);
   }
 });

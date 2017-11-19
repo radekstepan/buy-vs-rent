@@ -1,4 +1,12 @@
+// Noop function.
 const fn = (obj, key) => typeof obj[key] === 'function' ? obj[key] : () => 0;
+
+// Invest on stock market and update totals.
+const invest = (obj, amount, stock_return, income_tax) => {
+  obj[0] += amount; // more money invested
+  obj[1] = ((obj[0] + obj[1]) * (1 + stock_return)) - obj[0]; // the new profit
+  obj[2] = obj[1] > 0 ? obj[1] * (1 - income_tax) : obj[1] // the running after tax profit
+};
 
 module.exports = (opts, emit) => {
   ['property_appreciation','mortgage_deposit', 'mortgage_insurance'].map(key => opts[key] = fn(opts, key));
@@ -17,8 +25,8 @@ module.exports = (opts, emit) => {
 
   let deposit = opts.savings || 0; // $ deposit saved so far
   let stock = { // stock market balance
-    rent: 0,
-    buy: 0
+    rent: [0, 0, 0, 0], // yearly deposited, yearly balance, yearly after tax, after tax previous year
+    buy: [0, 0, 0, 0]
   };
   let bought = null; // when did I buy?
   let paid_off = false; // when is this house paid off?
@@ -30,7 +38,7 @@ module.exports = (opts, emit) => {
   let month = 0;
   let now = null;
 
-  const buy = ({available, stock_return}) => {
+  const buy = (available, stock_return) => {
     // Property value.
     property_value *= 1 + opts.property_appreciation();
 
@@ -71,17 +79,18 @@ module.exports = (opts, emit) => {
         // Can't pay up?
         if (available < 0) {
           // Sell the house, move the monies to stock and rent again.
+          let sale = property_value * (1 - opts.property_transaction_fees);
           if (paid_off > now) {
-            stock.buy -= mortgage - equity; // haven't paid off mortgage yet
+            sale -= mortgage - equity; // haven't paid off mortgage yet
           }
-          stock.buy += property_value * (1 - opts.property_transaction_fees);
+          invest(stock.buy, sale, stock_return, income_tax);
           defaulted = true;
         } else {
-          stock.buy = (stock.buy + available) * (1 + stock_return); // adjust stock market portfolio
+          invest(stock.buy, available, stock_return, income_tax);
         }
       }
     } else {
-      stock.buy = (stock.buy + available - rent) * (1 + stock_return); // just the stock market now
+      invest(stock.buy, available - rent, stock_return, income_tax); // just the stock market now
     }
   };
 
@@ -90,19 +99,16 @@ module.exports = (opts, emit) => {
     now = ((year - 1) * 12) + month;
 
     // Stock market.
-    let stock_return = opts.stock_return(); // stock market return for this month
-    if (stock_return > 0) { // we'll need to pay tax on stock market profit; TODO RRSP
-      stock_return *= 1 - income_tax;
-    }
+    const stock_return = opts.stock_return(); // stock market return for this month
 
     // After tax and expenses available income.
     const available = (income * (1 - income_tax)) - expenses;
 
     // Pay rent and invest on stock market.
-    stock.rent = (stock.rent + available - rent) * (1 + stock_return); // stock in rent condition, simples...
+    invest(stock.rent, available - rent, stock_return, income_tax);
 
     // Buy condition.
-    opts.property_value && buy({available, stock_return});
+    opts.property_value && buy(available, stock_return);
 
     // A new year.
     if (!(month % 12)) {
@@ -117,16 +123,21 @@ module.exports = (opts, emit) => {
 
       year += 1; month = 0;
 
+      ['rent', 'buy'].map(key => {
+        stock[key][3] += stock[key][0] + stock[key][2]; // update total stock
+        [0, 1, 2].map(i => stock[key][i] = 0); // reset
+      });
+
       // Log it.
-      let v = stock.rent;
+      let v = stock.rent[3];
       emit(month, 'rent:net_worth', v);
 
       if (paid_off) {
         if (defaulted) {
-          v = stock.buy;
+          v = stock.buy[3];
         } else {
           // Property value (less mortgage with equity paid off) and stock.
-          v = (property_value * (1 - opts.property_transaction_fees)) - mortgage + equity + stock.buy;
+          v = (property_value * (1 - opts.property_transaction_fees)) - mortgage + equity + stock.buy[3];
         }
       } else {
         v = deposit;
