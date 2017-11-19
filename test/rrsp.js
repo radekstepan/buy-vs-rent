@@ -6,8 +6,8 @@ const opts = {
   iterations: 1,
   years: 1,
   income: 1200,
-  income_tax: 0.1,
-  rrsp_allowance: 0.1,
+  income_tax: 0.3,
+  rrsp_allowance: 0.2,
   expenses: 10,
   rent: 10,
   rent_increase: () => 0,
@@ -16,6 +16,6 @@ const opts = {
 
 sample(opts, (time, key, val) => {
   if (key === 'rent:net_worth') {
-    tap.equal(Math.round(val), 1566);
+    tap.equal(Math.round(val), 1043);
   }
 });
