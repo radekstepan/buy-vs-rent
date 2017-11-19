@@ -17,8 +17,8 @@ for (let i = 0; i < opts.iterations; i++) {
     data.buy.iterations.push([]);
     data.rent.iterations.push([]);
 
-    iteration(opts, (key, val) => {
-      data[key].iterations[i].push(val);
+    iteration(opts, (time, key, val) => { // TODO *.net_worth for now
+      data[key.split(':')[0]].iterations[i].push(val);
     });
   })();
 }
