@@ -32,7 +32,7 @@
         {% if (o.defaults.rate) { %}
           <tr>
             <td>Mortgage defaults:</td>
-            <td>{%= o.defaults.rate %}% (> {%= 100 * o.defaults.mortgage_rate %}%)</td>
+            <td>{%= o.defaults.rate %}% (> {%= numeral(100 * o.defaults.mortgage_rate).format('0.0') %}%)</td>
           </tr>
         {% } %}
       </table>

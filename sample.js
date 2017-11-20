@@ -50,6 +50,7 @@ module.exports = (opts, emit) => {
   let rent = opts.rent; // monthly rent for this year
   let mortgage = null;
   let mortgage_rate = null;
+  let mortgage_payment = null;
 
   let deposit = opts.savings || 0; // $ deposit saved so far
   const stock = {};
@@ -94,20 +95,26 @@ module.exports = (opts, emit) => {
           property_tax = property_value * opts.property_tax;
           equity = 0;
           mortgage_rate = opts.mortgage_rate();
+          mortgage_payment = opts.mortgage_payment(mortgage, mortgage_rate, opts.mortgage_term);
           emit(month, 'buy:purchase', {
             mortgage,
           });
         }
       } else {
-        let mortgage_payment = 0;
-
         // Paying off mortgage?
         if (paid_off > now) {
           if (((now - bought) % (5 * 12)) === 0) { // adjust mortgage rate after 5 years?
             mortgage_rate = opts.mortgage_rate();
+            mortgage_payment = opts.mortgage_payment(
+              mortgage - equity, // less equity
+              mortgage_rate,
+              opts.mortgage_term - ((now - bought) / 12) // less years paid up
+            );
           }
-          mortgage_payment = opts.mortgage_payment(mortgage, mortgage_rate, opts.mortgage_term);
+        } else {
+          mortgage_payment = 0; // house paid off
         }
+
         const maint = (property_value_yearly * opts.property_maintenance) / 12; // property maintenance for this month
 
         available -= mortgage_payment + (property_tax / 12) + maint; // available to invest

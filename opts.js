@@ -25,7 +25,7 @@ opts.rrsp_allowance = 0.18; // % yearly
 
 opts.savings = n('10k'); // monies already saved up
 
-opts.rent = n('1500'); // $ monthly
+opts.rent = n('2k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 opts.rent_increase = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -39,7 +39,7 @@ opts.stock_return = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-opts.property_value = n('350k'); // $
+opts.property_value = n('400k'); // $
 opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
 opts.property_appreciation = (function() { // monthly rate
   const r = Math.pow(1 + opts.inflation, 1 / 12) - 1; // rise with inflation
