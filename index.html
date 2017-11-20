@@ -18,14 +18,15 @@
     </div>
     <script type="text/x-tmpl" id="table">
       <table>
-        <tr><td>Income:</td><td>{%= numeral(o.opts.income).format('$0.0a') %}</td></tr>
-        <tr><td>Property value:</td><td>{%= numeral(o.opts.property_value).format('$0.0a') %}</td></tr>
-        <tr><td>Samples:</td><td>{%= o.opts.samples %}</td></tr>
+        <tr><td>Income:</td><td>{%= numeral(o.opts.income).format('$0a') %}</td></tr>
+        <tr><td>Property value:</td><td>{%= numeral(o.opts.property_value).format('$0a') %}</td></tr>
+        <tr><td>Rent:</td><td>{%= numeral(o.opts.rent).format('$0,0') %}</td></tr>
+        <tr><td>Samples:</td><td>{%= numeral(o.opts.samples).format('0,0') %}</td></tr>
 
         {% if (o.purchase.rate) { %}
           <tr>
             <td>Property purchases:</td>
-            <td>{%= o.purchase.rate %}% (mortgage &asymp; {%= numeral(o.purchase.mortgage).format('$0.0a') %})</td>
+            <td>{%= o.purchase.rate %}% (mortgage &asymp; {%= numeral(o.purchase.mortgage).format('$0a') %})</td>
           </tr>
         {% } %}
         {% if (o.defaults.rate) { %}
@@ -117,6 +118,13 @@
             .attr("stroke-opacity", 0.6)
             .attr("stroke-width", 1.5)
             .attr("d", line);
+          // Labels.
+          g.append("text")
+            .attr("x", x(data.opts.years))
+            .attr("y", y(data[k.label][data.opts.years - 1][1]))
+            .attr("dy", "0.71em")
+            .attr("text-anchor", "end")
+            .text(numeral(data[k.label][data.opts.years - 1][1]).format('$0.00a'));
         });
       });
     </script>

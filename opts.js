@@ -25,7 +25,7 @@ opts.rrsp_allowance = 0.18; // % yearly
 
 opts.savings = n('10k'); // monies already saved up
 
-opts.rent = n('2k'); // $ monthly
+opts.rent = n('1500'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 opts.rent_increase = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
