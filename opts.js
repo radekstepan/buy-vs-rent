@@ -1,6 +1,7 @@
 const fs = require('fs');
 const numeral = require('numeral');
 const PD = require('probability-distributions');
+const amortize = require('amortize');
 const Finance = require('financejs');
 const finance = new Finance();
 
@@ -39,7 +40,7 @@ opts.stock_return = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 
-opts.property_value = n('400k'); // $
+opts.property_value = n('600k'); // $
 opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
 opts.property_appreciation = (function() { // monthly rate
   const r = Math.pow(1 + opts.inflation, 1 / 12) - 1; // rise with inflation
@@ -81,8 +82,13 @@ opts.mortgage_rate = (function() { // yearly rate
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
 opts.mortgage_term = 25; // years
-opts.mortgage_payment = function(mortgage, rate, term) { // monthly repayment
-  return finance.AM(mortgage, rate * 100, term * 12, 1);
+opts.mortgage_payment = function(mortgage, rate, term, month) { // monthly repayment
+  return amortize({
+    amount: mortgage,
+    rate: rate * 100,
+    totalTerm: term * 12,
+    amortizeTerm: month
+  });
 };
 
 module.exports = opts;

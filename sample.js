@@ -50,7 +50,8 @@ module.exports = (opts, emit) => {
   let rent = opts.rent; // monthly rent for this year
   let mortgage = null;
   let mortgage_rate = null;
-  let mortgage_payment = null;
+  let mortgage_payment = { payment: 0, balance: 0 };
+  let mortgage_term = opts.mortgage_term;
 
   let deposit = opts.savings || 0; // $ deposit saved so far
   const stock = {};
@@ -68,7 +69,6 @@ module.exports = (opts, emit) => {
   let bought = null; // when did I buy?
   let paid_off = false; // when is this house paid off?
   let defaulted = false;
-  let equity = 0; // amount of monies paid off on mortgage already
 
   let stop = false;
   let year = 1;
@@ -89,57 +89,74 @@ module.exports = (opts, emit) => {
 
         // Saved up enough? Buy!
         if (deposit >= deposit_needed) {
-          mortgage = cmhc_insurance - (deposit - deposit_needed) + (property_value * (1 - deposit_amount));
+          mortgage = cmhc_insurance
+            - (deposit - deposit_needed)
+            + (property_value * (1 - deposit_amount));
           bought = now;
-          paid_off = now + (opts.mortgage_term * 12);
+          paid_off = now + (mortgage_term * 12);
           property_tax = property_value * opts.property_tax;
           equity = 0;
           mortgage_rate = opts.mortgage_rate();
-          mortgage_payment = opts.mortgage_payment(mortgage, mortgage_rate, opts.mortgage_term);
-          emit(month, 'buy:purchase', {
-            mortgage,
-          });
+          emit(month, 'buy:purchase', { mortgage });
         }
       } else {
         // Paying off mortgage?
         if (paid_off > now) {
-          if (((now - bought) % (5 * 12)) === 0) { // adjust mortgage rate after 5 years?
-            mortgage_rate = opts.mortgage_rate();
-            mortgage_payment = opts.mortgage_payment(
-              mortgage - equity, // less equity
-              mortgage_rate,
-              opts.mortgage_term - ((now - bought) / 12) // less years paid up
-            );
+          // Calculate payment for this month.
+          mortgage_payment = opts.mortgage_payment(
+            mortgage,
+            mortgage_rate,
+            mortgage_term,
+            now - bought
+          );
+
+          // Adjust mortgage rate every 5 years.
+          if (((now - bought) % (5 * 12)) === 0) {
+            mortgage_rate = opts.mortgage_rate(); // a new rate
+            bought = now; // reset the 5 year period
+            mortgage = mortgage_payment.balance; // part of the mortgage has been paid up
+            mortgage_term -= 5;
           }
+
         } else {
-          mortgage_payment = 0; // house paid off
+          mortgage_payment = { payment: 0, balance: 0 }; // house paid off
         }
 
         const maint = (property_value_yearly * opts.property_maintenance) / 12; // property maintenance for this month
 
-        available -= mortgage_payment + (property_tax / 12) + maint; // available to invest
+        available -= mortgage_payment.payment + (property_tax / 12) + maint; // available to invest
 
         // Can't pay up?
         if (available < 0) {
           // Sell the house, move the monies to stock and rent again.
           let sale = property_value * (1 - opts.property_transaction_fees);
           if (paid_off > now) {
-            sale -= mortgage - equity; // haven't paid off mortgage yet
+            sale -= mortgage_payment.balance + mortgage_payment.payment; // haven't paid off mortgage yet
           }
-          invest(stock.buy, sale, { stock_return, income_tax, rrsp_allowance: income * rrsp_allowance });
+          // TODO do something about a loss!
+          if (sale > 0) {
+            invest(stock.buy, sale, {
+              stock_return,
+              income_tax,
+              rrsp_allowance: income * rrsp_allowance
+            });
+          }
           defaulted = true;
-          emit(month, 'buy:default', {
-            mortgage,
-            mortgage_rate,
-            mortgage_payment
-          });
+          emit(month, 'buy:default', { mortgage_rate });
         } else {
-          equity += mortgage_payment; // had enough to pay mortgage payment
-          invest(stock.buy, available, { stock_return, income_tax, rrsp_allowance: income * rrsp_allowance }); // the rest goes to stock
+          invest(stock.buy, available, {
+            stock_return,
+            income_tax,
+            rrsp_allowance: income * rrsp_allowance
+          }); // the rest goes to stock
         }
       }
     } else {
-      invest(stock.buy, available - rent, { stock_return, income_tax, rrsp_allowance: income * rrsp_allowance }); // just the stock market now
+      invest(stock.buy, available - rent, {
+        stock_return,
+        income_tax,
+        rrsp_allowance: income * rrsp_allowance
+      }); // just the stock market now
     }
   };
 
@@ -154,7 +171,11 @@ module.exports = (opts, emit) => {
     const available = (income * (1 - income_tax)) - expenses;
 
     // Pay rent and invest on stock market.
-    invest(stock.rent, available - rent, { stock_return, income_tax, rrsp_allowance: income * rrsp_allowance });
+    invest(stock.rent, available - rent, {
+      stock_return,
+      income_tax,
+      rrsp_allowance: income * rrsp_allowance
+    });
 
     // Buy condition.
     opts.property_value && buy(available, stock_return);
@@ -196,7 +217,10 @@ module.exports = (opts, emit) => {
           v = stock.buy.personal.total + stock.buy.rrsp.total;
         } else {
           // Property value (less mortgage with equity paid off) and stock.
-          v = (property_value * (1 - opts.property_transaction_fees)) - mortgage + equity + stock.buy.personal.total + stock.buy.rrsp.total;
+          v = (property_value * (1 - opts.property_transaction_fees))
+            - mortgage_payment.balance
+            + stock.buy.personal.total
+            + stock.buy.rrsp.total;
         }
       } else {
         v = deposit;

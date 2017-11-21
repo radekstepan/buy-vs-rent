@@ -12,7 +12,11 @@ const opts = {
   property_value: 2160,
   property_transaction_fees: 0,
   mortgage_term: 2,
-  mortgage_payment: (mortgage, rate, term) => 90,
+  mortgage_payment: (mortgage, rate, term, month) => ({
+    payment: 90,
+    principal: 90 * month,
+    balance: mortgage - (90 * month)
+  }),
   property_tax: 0,
   property_maintenance: 0
 };
