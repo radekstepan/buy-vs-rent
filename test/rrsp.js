@@ -16,6 +16,7 @@ const opts = {
 
 sample(opts, (time, key, val) => {
   if (key === 'rent:net_worth') {
-    tap.equal(Math.round(val), 1043);
+    tap.equal(Math.round(val.personal), 713);
+    tap.equal(Math.round(val.rrsp), 329);
   }
 });

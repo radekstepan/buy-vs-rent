@@ -24,6 +24,9 @@ const opts = {
 
 sample(opts, (time, key, val) => {
   if (key === 'buy:net_worth') {
-    tap.equal(Math.round(val), 1000 + 80 + (10 * 80));
+    tap.same(val, {
+      personal: 1000 + 80 + (10 * 80),
+      rrsp: 0
+    });
   }
 });

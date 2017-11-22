@@ -209,21 +209,28 @@ module.exports = (opts, emit) => {
       });
 
       // Log it.
-      let v = stock.rent.personal.total + stock.rent.rrsp.total;
+      let v = {
+        personal: stock.rent.personal.total,
+        rrsp: stock.rent.rrsp.total
+      };
       emit(month, 'rent:net_worth', v);
 
       if (paid_off) {
         if (defaulted) {
-          v = stock.buy.personal.total + stock.buy.rrsp.total;
+          v = {
+            personal: stock.buy.personal.total,
+            rrsp: stock.buy.rrsp.total
+          };
         } else {
           // Property value (less mortgage with equity paid off) and stock.
-          v = (property_value * (1 - opts.property_transaction_fees))
-            - mortgage_payment.balance
-            + stock.buy.personal.total
-            + stock.buy.rrsp.total;
+          v = {
+            house: (property_value * (1 - opts.property_transaction_fees)) - mortgage_payment.balance,
+            personal: stock.buy.personal.total,
+            rrsp: stock.buy.rrsp.total
+          }
         }
       } else {
-        v = deposit;
+        v = { cash: deposit };
       }
       emit(month, 'buy:net_worth', v);
     }

@@ -24,7 +24,8 @@ for (let i = 0; i < opts.samples; i++) {
       const [ key, type ] = evt.split(':');
       switch (type) {
         case 'net_worth':
-          return data[key].samples[i].push(val);
+          const amount = Object.values(val).reduce((total, amount) => total += amount, 0);
+          return data[key].samples[i].push(amount);
         case 'default':
           return data.defaults.push(val.mortgage_rate);
         case 'purchase':

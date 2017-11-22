@@ -7,6 +7,10 @@ const finance = new Finance();
 
 const n = val => numeral(val).value();
 const r = (name, map) => fs.readFileSync(`./data/${name}`, 'utf-8').split('\n').map(map);
+const y2M = function(val) { // yearly to monthly rate
+  const r = Math.pow(1 + val, 1 / 12) - 1;
+  return () => r;
+};
 
 const opts = {};
 
@@ -26,7 +30,7 @@ opts.rrsp_allowance = 0.18; // % yearly
 
 opts.savings = n('10k'); // monies already saved up
 
-opts.rent = n('2k'); // $ monthly
+opts.rent = n('1,500'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 opts.rent_increase = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -39,15 +43,15 @@ opts.stock_return = (function() { // yearly rate
   const d = r('60-40_portfolio_returns.csv', parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
+// opts.stock_return = y2M(opts.inflation);
 
-opts.property_value = n('600k'); // $
+opts.property_value = n('300k'); // $
 opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
 opts.property_appreciation = (function() { // monthly rate
-  const r = Math.pow(1 + opts.inflation, 1 / 12) - 1; // rise with inflation
-  return () => r;
-  // const d = r(`${opts.property_type}_appreciation_toronto.csv`, parseFloat);
-  // return () => d[PD.rint(1, 0, d.length - 1).pop()];
+  const d = r(`${opts.property_type}_appreciation_toronto.csv`, parseFloat);
+  return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
+opts.property_appreciation = y2M(opts.inflation);
 opts.property_tax = 0.007; // % of property value yearly
 opts.property_tax_increase = opts.inflation; // % yearly
 opts.property_maintenance = 0.015; // % of property value earmarked yearly
