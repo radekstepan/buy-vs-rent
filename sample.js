@@ -1,31 +1,7 @@
+const invest = require('./modules/invest');
+
 // Noop function.
 const fn = (obj, key) => typeof obj[key] === 'function' ? obj[key] : () => 0;
-
-// Invest on stock market and update totals.
-const invest = (obj, amount, { stock_return, rrsp_allowance, income_tax }) => {
-  if (!amount) return;
-
-  if (rrsp_allowance > 0) {
-    // Now for RRSP.
-    const [rrsp_amount, remainder] = (amount > rrsp_allowance) ? [rrsp_allowance, amount - rrsp_allowance] : [amount, 0];
-
-    obj.rrsp.invested += rrsp_amount; // more money invested
-    obj.rrsp.profit = ((obj.rrsp.invested + obj.rrsp.profit) * (1 + stock_return)) - obj.rrsp.invested; // the new profit
-
-    // Personal account
-    if (remainder) {
-      obj.personal.invested += remainder; // more money invested
-    }
-    obj.personal.profit = ((obj.personal.invested + obj.personal.profit) * (1 + stock_return)) - obj.personal.invested; // the new profit
-
-    // Tax credit goes into personal account.
-    obj.personal.invested += rrsp_amount * income_tax;
-  } else {
-    // Personal account only.
-    obj.personal.invested += amount; // more money invested
-    obj.personal.profit = ((obj.personal.invested + obj.personal.profit) * (1 + stock_return)) - obj.personal.invested; // the new profit
-  }
-};
 
 module.exports = (opts, emit) => {
   [
