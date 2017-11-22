@@ -197,7 +197,8 @@ module.exports = (opts, emit) => {
         // Pay tax on stock profit in personal.
         stock[i].personal.total += stock[i].personal.invested;
         if (stock[i].personal.profit > 0) {
-          stock[i].personal.total += stock[i].personal.profit * (1 - income_tax);
+          // capital gains taxes are a half of income tax.
+          stock[i].personal.total += stock[i].personal.profit * (1 - (income_tax / 2));
         } else {
           stock[i].personal.total += stock[i].personal.profit;
         }
