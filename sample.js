@@ -1,5 +1,6 @@
 const invest = require('./modules/invest');
 const Mortgage = require('./modules/mortgage');
+const tax = require('./modules/tax');
 
 // Noop function.
 const fn = (obj, key) => typeof obj[key] === 'function' ? obj[key] : () => 0;
