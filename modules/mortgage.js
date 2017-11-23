@@ -38,7 +38,7 @@ class Mortgage {
   }
 
   // Make a mortgage payment for this month.
-  payment(time) {
+  payment(time, available) {
     if (this.paid_off > time) {
       const { payment, balance } = this.opts.mortgage_payment(
         this.mortgage,
@@ -46,20 +46,22 @@ class Mortgage {
         this.mortgage_term,
         time - this.bought
       );
-
       // Adjust mortgage rate every 5 years.
       if (((time - this.bought) % (5 * 12)) === 0) {
         this.rate(time, balance);
       }
-
       // Balance remaining.
       this.balance = balance;
-
-      return payment;
-    } else {
-      // House paid off!
-      return 0;
+      // Make the payment.
+      available -= payment;
+      // Default?
+      if (available < 0) {
+        this.defaulted = true;
+        this.balance += payment; // payment didn't go through
+      }
     }
+
+    return available;
   }
 }
 

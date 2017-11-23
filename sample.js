@@ -63,19 +63,17 @@ module.exports = (opts, emit) => {
           emit(month, 'buy:purchase', mortgage);
         }
       } else {
-        // Paying off mortgage.
-        const payment = mortgage.payment(now);
-
         const maint = (property_value_yearly * opts.property_maintenance) / 12; // property maintenance for this month
-
-        available -= payment + (property_tax / 12) + maint; // available to invest
+        available -= (property_tax / 12) + maint;
+        // Make a mortgage payment.
+        available = mortgage.payment(now, available);
 
         // Can't pay up?
         if (available < 0) {
           // Sell the house, move the monies to stock and rent again.
           let sale = property_value * (1 - opts.property_transaction_fees);
           if (mortgage.paid_off > now) {
-            sale -= mortgage.balance + payment; // haven't paid off mortgage yet
+            sale -= mortgage.balance; // haven't paid off mortgage yet
           }
           // TODO do something about a loss!
           if (sale > 0) {
@@ -85,14 +83,14 @@ module.exports = (opts, emit) => {
               rrsp_allowance: income * rrsp_allowance
             });
           }
-          mortgage.defaulted = true;
           emit(month, 'buy:default', mortgage);
         } else {
+          // With the rest going to stock
           invest(stock.buy, available, {
             stock_return,
             income_tax,
             rrsp_allowance: income * rrsp_allowance
-          }); // the rest goes to stock
+          });
         }
       }
     } else {
