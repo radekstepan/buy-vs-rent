@@ -45,63 +45,6 @@ module.exports = (opts, emit) => {
   let month = 0;
   let now = null;
 
-  const buy = (available, stock_return) => {
-    // Property value.
-    property_value *= 1 + opts.property_appreciation();
-
-    if (!mortgage.defaulted) {
-      // Saving for house deposit.
-      if (!mortgage.paid_off) {
-        // Saved up more.
-        deposit += available - rent;
-        // How much deposit do we need?
-        const deposit_needed = mortgage.deposit_for(property_value);
-        // Is it enough? Buy!
-        if (deposit >= deposit_needed) {
-          mortgage.buy(now, property_value, deposit);
-          property_tax = property_value * opts.property_tax;
-          emit(month, 'buy:purchase', mortgage);
-        }
-      } else {
-        const maint = (property_value_yearly * opts.property_maintenance) / 12; // property maintenance for this month
-        available -= (property_tax / 12) + maint;
-        // Make a mortgage payment.
-        available = mortgage.payment(now, available);
-
-        // Can't pay up?
-        if (available < 0) {
-          // Sell the house, move the monies to stock and rent again.
-          let sale = property_value * (1 - opts.property_transaction_fees);
-          if (mortgage.paid_off > now) {
-            sale -= mortgage.balance; // haven't paid off mortgage yet
-          }
-          // TODO do something about a loss!
-          if (sale > 0) {
-            invest(stock.buy, sale, {
-              stock_return,
-              income_tax,
-              rrsp_allowance: income * rrsp_allowance
-            });
-          }
-          emit(month, 'buy:default', mortgage);
-        } else {
-          // With the rest going to stock
-          invest(stock.buy, available, {
-            stock_return,
-            income_tax,
-            rrsp_allowance: income * rrsp_allowance
-          });
-        }
-      }
-    } else {
-      invest(stock.buy, available - rent, {
-        stock_return,
-        income_tax,
-        rrsp_allowance: income * rrsp_allowance
-      }); // just the stock market now
-    }
-  };
-
   while (!stop) {
     month += 1; // new month
     now = ((year - 1) * 12) + month;
@@ -110,7 +53,7 @@ module.exports = (opts, emit) => {
     const stock_return = opts.stock_return(); // stock market return for this month
 
     // After tax and expenses available income.
-    const available = (income * (1 - income_tax)) - expenses;
+    let available = (income * (1 - income_tax)) - expenses;
 
     // Pay rent and invest on stock market.
     invest(stock.rent, available - rent, {
@@ -120,7 +63,47 @@ module.exports = (opts, emit) => {
     });
 
     // Buy condition.
-    opts.property_value && buy(available, stock_return);
+    if (opts.property_value) {
+      // Property value.
+      property_value *= 1 + opts.property_appreciation();
+
+      if (mortgage.defaulted) {
+        available -= rent;
+      } else {
+        // Saving for house deposit.
+        if (!mortgage.paid_off) {
+          // Saved up more.
+          deposit += available - rent;
+          // Enough? Buy!
+          if (deposit >= mortgage.deposit_for(property_value)) {
+            mortgage.buy(now, property_value, deposit);
+            property_tax = property_value * opts.property_tax;
+            emit(month, 'buy:purchase', mortgage);
+          }
+          available = 0;
+        } else {
+          available -= (property_tax + (property_value_yearly * opts.property_maintenance)) / 12;
+          // Make a mortgage payment.
+          available = mortgage.payment(now, available);
+
+          // Can't pay up?
+          if (available < 0) {
+            // Sell the house, move the monies to stock and rent again.
+            available = property_value * (1 - opts.property_transaction_fees);
+            if (mortgage.paid_off > now) {
+              available -= mortgage.balance; // haven't paid off mortgage yet
+            }
+            emit(month, 'buy:default', mortgage);
+          }
+        }
+      }
+
+      invest(stock.buy, available, {
+        stock_return,
+        income_tax,
+        rrsp_allowance: income * rrsp_allowance
+      });
+    }
 
     // A new year.
     if (!(month % 12)) {

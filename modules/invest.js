@@ -2,7 +2,7 @@ const tick = ({ invested, profit }, stock_return) => ((invested + profit) * (1 +
 
 // Invest on stock market and update totals.
 module.exports = ({ rrsp, personal }, amount, { stock_return, rrsp_allowance, income_tax }) => {
-  if (!amount) return;
+  if (!amount || amount <= 0) return;
 
   if (rrsp_allowance > 0) {
     // Now for RRSP.
