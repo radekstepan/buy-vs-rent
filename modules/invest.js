@@ -1,7 +1,7 @@
 const tick = ({ invested, profit }, stock_return) => ((invested + profit) * (1 + stock_return)) - invested;
 
 // Invest on stock market and update totals.
-module.exports = ({ rrsp, personal }, amount, { stock_return, rrsp_allowance, income_tax }) => {
+module.exports = ({ rrsp, personal }, amount, { stock_return, rrsp_allowance }) => {
   if (!amount || amount <= 0) return;
 
   if (rrsp_allowance > 0) {
@@ -20,7 +20,7 @@ module.exports = ({ rrsp, personal }, amount, { stock_return, rrsp_allowance, in
     personal.profit = tick(personal, stock_return); // the new profit
 
     // Tax credit goes into personal account.
-    personal.invested += rrsp_amount * income_tax;
+    rrsp.credit += rrsp_amount;
   } else {
     // Personal account only.
     personal.invested += amount; // more money invested

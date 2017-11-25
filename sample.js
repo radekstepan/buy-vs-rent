@@ -1,6 +1,5 @@
 const invest = require('./modules/invest');
 const Mortgage = require('./modules/mortgage');
-const tax = require('./modules/tax');
 
 // Noop function.
 const fn = (obj, key) => typeof obj[key] === 'function' ? obj[key] : () => 0;
@@ -19,9 +18,10 @@ module.exports = (opts, emit) => {
   let property_value_yearly = opts.property_value; // yearly house price
   let property_tax = null;
 
-  let income = opts.income / 12; // monthly income for this year
-  let income_tax = opts.income_tax || 0; // income tax for this year
-  const income_tax_increase = opts.income_tax_increase || 0;
+  let income = opts.income;
+  const income_old_age = opts.income_old_age || 1; // how much % less do I make as a pensioner
+  const tax = opts.tax || { getNetIncome: income => income }; // 0% tax default
+  let income_net = tax.getNetIncome(income); // after tax income
   let expenses = opts.expenses; // monthly expenses for this year
   const rrsp_allowance = opts.rrsp_allowance || 0; // % yearly
 
@@ -36,7 +36,8 @@ module.exports = (opts, emit) => {
       stock[i][j] = {
         invested: 0,
         profit: 0,
-        total: 0
+        total: 0,
+        credit: 0
       };
     });
   });
@@ -54,13 +55,12 @@ module.exports = (opts, emit) => {
     const stock_return = opts.stock_return(); // stock market return for this month
 
     // After tax and expenses available income.
-    let available = (income * (1 - income_tax)) - expenses;
+    let available = (income_net / 12) - expenses;
 
     // Pay rent and invest on stock market.
     invest(stock.rent, available - rent, {
       stock_return,
-      income_tax,
-      rrsp_allowance: income * rrsp_allowance
+      rrsp_allowance: (income * rrsp_allowance) / 12
     });
 
     // Buy condition.
@@ -101,39 +101,50 @@ module.exports = (opts, emit) => {
 
       invest(stock.buy, available, {
         stock_return,
-        income_tax,
-        rrsp_allowance: income * rrsp_allowance
+        rrsp_allowance: (income * rrsp_allowance) / 12
       });
     }
 
     // A new year.
     if (!(month % 12)) {
-      property_value_yearly = property_value; // update yearly property value
-      property_tax *= 1 + opts.property_tax_increase; // tax is higher
-
-      rent *= (1 + opts.rent_increase()); // rent is more expensive
-
-      income *= (1 + opts.income_increase); // I make more
-      income_tax += income_tax_increase; // income tax bump
-      expenses *= (1 + opts.expenses_increase); // more expenses
-
-      year += 1; month = 0;
-
+      // First log the stock balance (and pay tax on it).
       ['rent', 'buy'].map(i => {
         // Pay tax on stock profit in personal.
+        const { profit } = stock[i].personal;
         stock[i].personal.total += stock[i].personal.invested;
-        if (stock[i].personal.profit > 0) {
-          // capital gains taxes are a half of income tax.
-          stock[i].personal.total += stock[i].personal.profit * (1 - (income_tax / 2));
-        } else {
-          stock[i].personal.total += stock[i].personal.profit;
+        stock[i].personal.total += profit;
+
+        if (profit > 0) {
+          // Capital gains taxes are half of income tax.
+          stock[i].personal.total -= (tax.getNetIncome(income + profit) - income_net) / 2;
         }
 
         ['invested', 'profit'].map(k => stock[i].personal[k] = 0); // reset personal account
 
-        // RRSP is tax on whole balance.
-        stock[i].rrsp.total = (stock[i].rrsp.invested + stock[i].rrsp.profit) * (1 - income_tax);
+        // Assume RRSP would be taxed on the whole amount, after yearly "old person" income...
+        //  this is unrealistic as the RRSP would be drawn in portions.
+        if (rrsp_allowance) {
+          const rrsp = stock[i].rrsp.invested + stock[i].rrsp.profit;
+          stock[i].rrsp.total = tax.getNetIncome((income * income_old_age) + rrsp) - income_net;
+
+          // Invest tax credit into RRSP.
+          const rrsp_credit = income_net - tax.getNetIncome(income - stock[i].rrsp.credit);
+          stock[i].personal.invested += rrsp_credit;
+          stock[i].rrsp.credit = 0;
+          emit(month, `${i}:rrsp_credit`, rrsp_credit);
+        }
       });
+
+      property_value_yearly = property_value; // update yearly property value
+      property_tax *= 1 + opts.property_tax_increase; // tax is higher
+
+      rent *= 1 + opts.rent_increase(); // rent is more expensive
+
+      income *= 1 + opts.income_increase; // I make more
+      income_net = tax.getNetIncome(income); // new after tax income
+      expenses *= 1 + opts.expenses_increase; // more expenses
+
+      year += 1; month = 0;
 
       // Log it.
       let v = {

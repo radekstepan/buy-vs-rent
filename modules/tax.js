@@ -288,8 +288,8 @@ class Tax {
     return _.sumBy(this.getProvincialTaxTable(e, t), "amount")
   }
 
-  getNetIncome(e, t) {
-    return e - this.getTaxes(e, t)
+  getNetIncome(income, province = 'ON') {
+    return income - this.getTaxes(income, province)
   }
 
   getTaxes(e, t) {
@@ -366,7 +366,7 @@ class Tax {
     }
   }
 
-  getTaxDeduction(income, tax_deduction, province) {
+  getTaxDeduction(income, tax_deduction, province = 'ON') {
     var a, i;
     return i = this.getTaxes(income, province),
       a = this.getTaxes(income - tax_deduction, province),

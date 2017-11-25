@@ -6,8 +6,8 @@ const opts = {
   iterations: 1,
   years: 1,
   income: 1200,
-  income_tax: 0,
   expenses: 10,
+  rrsp_allowance: 0, // force personal account only
   rent: 10,
   property_value: 2160,
   property_transaction_fees: 0,

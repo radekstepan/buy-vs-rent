@@ -5,6 +5,8 @@ const amortize = require('amortize');
 const Finance = require('financejs');
 const finance = new Finance();
 
+const tax = require('./modules/tax');
+
 const n = val => numeral(val).value();
 const r = (name, map) => fs.readFileSync(`./data/${name}`, 'utf-8').split('\n').map(map);
 const y2M = function(val) { // yearly to monthly rate
@@ -21,8 +23,8 @@ opts.inflation = 0.02; // desired inflation rate set by Bank of Canada
 
 opts.income = n('100k'); // $ net yearly income
 opts.income_increase = opts.inflation + 0.02; // % yearly
-opts.income_tax = 0.3; // %
-opts.income_tax_increase = 0.0025; // % yearly increase to income tax (higher band etc.)
+opts.income_old_age = 0.5; // % less income in old age
+opts.tax = tax;
 opts.expenses = n('2k'); // monthly expenses
 opts.expenses_increase = opts.inflation; // % yearly
 
