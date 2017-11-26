@@ -23,7 +23,7 @@ opts.inflation = 0.02; // desired inflation rate set by Bank of Canada
 
 opts.income = n('100k'); // $ net yearly income
 opts.income_increase = opts.inflation; // % yearly
-opts.income_old_age = 0.5; // % less income in old age
+opts.income_old_age = 0.2; // % less income in old age
 opts.tax = tax;
 opts.expenses = n('2.5k'); // monthly expenses
 opts.expenses_increase = opts.inflation; // % yearly
@@ -45,7 +45,7 @@ opts.stock_return = (function() { // yearly rate
   const d = r('60-40_portfolio_returns.csv', parseFloat);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
-// opts.stock_return = y2M(opts.inflation);
+// opts.stock_return = y2M(opts.inflation) + 0.02; // 2% above inflation
 
 opts.property_value = n('300k'); // $
 opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]

@@ -14,7 +14,15 @@
   <body>
     <div id="app">
       <svg height="600" width="1000"></svg>
-      <div class="table"></div>
+      <div class="flex">
+        <div class="table"></div>
+        <div class="net_worth rent">
+          <svg></svg>
+        </div>
+        <div class="net_worth buy">
+          <svg></svg>
+        </div>
+      </div>
     </div>
     <script type="text/x-tmpl" id="table">
       <table>
@@ -40,10 +48,58 @@
     </script>
     <script>
       d3.json(`data.json?${+new Date}`, (data) => {
+        const colors = { rent: 'sunglow', buy: 'neptune' };
+
         // Table.
         document.querySelector('.table').innerHTML = tmpl('table', data);
 
-        // Chart.
+        // Net worth account split.
+        ['rent', 'buy'].map(k => {
+          const svg = d3.select(`.net_worth.${k} svg`),
+              width = 0.8 * document.querySelector('.flex').clientWidth / 3,
+              height = width,
+              radius = Math.min(width, height) / 2,
+              g = svg.attr('width', width).attr('height', height)
+                .append("g")
+                  .attr("transform", `translate(${width / 2},${height / 2})`);
+
+          // Acounts to opacity.
+          const opa = {
+            'house': 1,
+            'rrsp': 0.8,
+            'personal': 0.6,
+            'cash': 0.2
+          };
+
+          const pie = d3.pie()
+            .sort(null)
+            .value(d => d[1] );
+
+          const path = d3.arc()
+            .outerRadius(radius - 10)
+            .innerRadius(0);
+
+          const label = d3.arc()
+              .outerRadius(radius - 80)
+              .innerRadius(radius - 80);
+
+          const arc = g.selectAll(".arc")
+            .data(pie(data.net_worth[k]))
+            .enter().append("g")
+              .attr("class", "arc");
+
+          arc.append("path")
+            .attr("d", path)
+            .attr("class", `fill ${colors[k]}`)
+            .attr("fill-opacity", d => opa[d.data[0]]);
+
+          arc.append("text")
+              .attr("transform", d => `translate(${label.centroid(d)})`)
+              .attr("dy", "0.35em")
+              .text(d => `${Math.round(d.data[1] * 100)}% ${d.data[0]}`);
+        });
+
+        // Chart itself.
         let height = 600, width = 1000;
         const margin = { 'top': 20, 'right': 20, 'bottom': 20, 'left': 70 };
         width -= margin.left + margin.right;
@@ -90,31 +146,27 @@
             .attr("text-anchor", "end")
             .text("Net Worth ($)");
 
-        [
-          // highlight mortgage default when rate > 25%
-          { label: 'buy', color: data.defaults.rate > 25 ? 'red' : 'neptune' },
-          { label: 'rent', color: 'sunglow' }
-        ].map(k => {
+        ['rent', 'buy'].map(k => {
           // Quantiles.
           [0, 2].map(q => {
             g.append("path")
-              .datum(data[k.label].map(d => d[q]))
+              .datum(data[k].map(d => d[q]))
               .attr("fill", "none")
-              .attr("class", `stroke ${k.color}`)
+              .attr("class", `stroke ${colors[k]}`)
               .attr("stroke-width", 1.5)
               .attr("d", line);
           });
           // Fill the area.
           g.append("path")
-            .datum(data[k.label])
-            .attr("class", `fill ${k.color}`)
+            .datum(data[k])
+            .attr("class", `fill ${colors[k]}`)
             .attr("fill-opacity", 0.07)
             .attr("d", area);
           // Medians.
           g.append("path")
-            .datum(data[k.label].map(d => d[1]))
+            .datum(data[k].map(d => d[1]))
             .attr("fill", "none")
-            .attr("class", `stroke ${k.color}`)
+            .attr("class", `stroke ${colors[k]}`)
             .attr("stroke-dasharray", '5, 10')
             .attr("stroke-opacity", 0.6)
             .attr("stroke-width", 1.5)
@@ -122,10 +174,10 @@
           // Labels.
           g.append("text")
             .attr("x", x(data.opts.years))
-            .attr("y", y(data[k.label][data.opts.years - 1][1]))
+            .attr("y", y(data[k][data.opts.years - 1][1]))
             .attr("dy", "0.71em")
             .attr("text-anchor", "end")
-            .text(numeral(data[k.label][data.opts.years - 1][1]).format('$0.00a'));
+            .text(numeral(data[k][data.opts.years - 1][1]).format('$0.00a'));
         });
       });
     </script>

@@ -13,8 +13,17 @@
     fill: #555b51;
     font-size: 11px;
   }
-  table {
+
+  .flex {
+    display: flex;
     margin-top: 20px;
+
+    > * {
+      flex-grow: 1;
+    }
+  }
+
+  table {
     font-size: 12px;
     color: #555b51;
 
