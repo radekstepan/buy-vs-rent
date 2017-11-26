@@ -18,9 +18,10 @@
     </div>
     <script type="text/x-tmpl" id="table">
       <table>
-        <tr><td>Income:</td><td>{%= numeral(o.opts.income).format('$0a') %}</td></tr>
+        <tr><td>Income (y):</td><td>{%= numeral(o.opts.income).format('$0a') %}</td></tr>
         <tr><td>Property value:</td><td>{%= numeral(o.opts.property_value).format('$0a') %}</td></tr>
-        <tr><td>Rent:</td><td>{%= numeral(o.opts.rent).format('$0,0') %}</td></tr>
+        <tr><td>Rent (m):</td><td>{%= numeral(o.opts.rent).format('$0,0') %}</td></tr>
+        <tr><td>Expenses (m):</td><td>{%= numeral(o.opts.expenses).format('$0,0') %}</td></tr>
         <tr><td>Samples:</td><td>{%= numeral(o.opts.samples).format('0,0') %}</td></tr>
 
         {% if (o.purchase.rate) { %}

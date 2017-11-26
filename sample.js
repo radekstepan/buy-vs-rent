@@ -79,7 +79,7 @@ module.exports = (opts, emit) => {
           if (deposit >= mortgage.deposit_for(property_value)) {
             mortgage.buy(now, property_value, deposit);
             property_tax = property_value * opts.property_tax;
-            emit(month, 'buy:purchase', mortgage);
+            emit(now, 'buy:purchase', mortgage);
           }
           available = 0;
         } else {
@@ -94,7 +94,7 @@ module.exports = (opts, emit) => {
             if (mortgage.paid_off > now) {
               available -= mortgage.balance; // haven't paid off mortgage yet
             }
-            emit(month, 'buy:default', mortgage);
+            emit(now, 'buy:default', mortgage);
           }
         }
       }
@@ -131,7 +131,7 @@ module.exports = (opts, emit) => {
           const rrsp_credit = income_net - tax.getNetIncome(income - stock[i].rrsp.credit);
           stock[i].personal.invested += rrsp_credit;
           stock[i].rrsp.credit = 0;
-          emit(month, `${i}:rrsp_credit`, rrsp_credit);
+          emit(now, `${i}:rrsp_credit`, rrsp_credit);
         }
       });
 
@@ -151,7 +151,7 @@ module.exports = (opts, emit) => {
         personal: stock.rent.personal.total,
         rrsp: stock.rent.rrsp.total
       };
-      emit(month, 'rent:net_worth', v);
+      emit(now, 'rent:net_worth', v);
 
       if (mortgage.paid_off) {
         if (mortgage.defaulted) {
@@ -170,7 +170,7 @@ module.exports = (opts, emit) => {
       } else {
         v = { cash: deposit };
       }
-      emit(month, 'buy:net_worth', v);
+      emit(now, 'buy:net_worth', v);
     }
     // Stop after x years automatically.
     if (year > opts.years) stop = true;
