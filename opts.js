@@ -47,7 +47,7 @@ opts.stock_return = (function() { // yearly rate
   const d = r('60-40_portfolio_returns.csv', parseFloat, isNumber);
   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 })();
-// opts.stock_return = y2M(opts.inflation) + 0.02; // 2% above inflation
+// opts.stock_return = y2M(opts.inflation + 0.02); // 2% above inflation
 
 opts.property_value = n('300k'); // $
 opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
@@ -55,7 +55,7 @@ opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
 //   const d = r(`${opts.property_type}_appreciation_toronto.csv`, parseFloat);
 //   return () => d[PD.rint(1, 0, d.length - 1).pop()];
 // })();
-opts.property_appreciation = y2M(opts.inflation) + 0.02; // 2% above inflation
+opts.property_appreciation = y2M(opts.inflation + 0.02); // 2% above inflation
 opts.property_tax = 0.007; // % of property value yearly
 opts.property_tax_increase = opts.inflation; // % yearly
 opts.property_maintenance = 0.015; // % of property value earmarked yearly
