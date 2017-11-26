@@ -177,7 +177,7 @@
             .attr("y", y(data[k][data.opts.years - 1][1]))
             .attr("dy", "0.71em")
             .attr("text-anchor", "end")
-            .text(numeral(data[k][data.opts.years - 1][1]).format('$0.00a'));
+            .text(`${numeral(data[k][data.opts.years - 1][1]).format('$0.00a')} (${k})`);
         });
       });
     </script>

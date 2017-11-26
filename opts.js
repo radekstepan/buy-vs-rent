@@ -21,7 +21,7 @@ opts.years = 30;
 
 opts.inflation = 0.02; // desired inflation rate set by Bank of Canada
 
-opts.income = n('100k'); // $ net yearly income
+opts.income = n('85k'); // $ net yearly income
 opts.income_increase = opts.inflation; // % yearly
 opts.income_old_age = 0.2; // % less income in old age
 opts.tax = tax;
@@ -32,7 +32,7 @@ opts.rrsp_allowance = 0.18; // % yearly
 
 opts.savings = n('10k'); // monies already saved up
 
-opts.rent = n('2k'); // $ monthly
+opts.rent = n('1.5k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 opts.rent_increase = (function() { // yearly rate
   const d = r('rent_increase.csv', parseFloat);
@@ -82,10 +82,12 @@ opts.mortgage_insurance = function(property_value, mortgage_deposit) {
 };
 
 // https://www.ratehub.ca/5-year-fixed-mortgage-rate-history
+// opts.mortgage_rate = (function() { // yearly rate
+//   const d = r('5yr_fixed_mortgage.csv', parseFloat);
+//   return () => d[PD.rint(1, 0, d.length - 1).pop()];
+// })();
 opts.mortgage_rate = (function() { // yearly rate
-  // return () => 0.075;
-  const d = r('5yr_fixed_mortgage.csv', parseFloat);
-  return () => d[PD.rint(1, 0, d.length - 1).pop()];
+  return () => PD.runif(1, 0.05, 0.075).pop(); // 5% - 7.5%
 })();
 opts.mortgage_term = 25; // years
 opts.mortgage_payment = function(mortgage, rate, term, month) { // monthly repayment
