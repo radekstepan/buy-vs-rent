@@ -1,5 +1,6 @@
 const invest = require('./modules/invest');
 const Mortgage = require('./modules/mortgage');
+const Income = require('./modules/income');
 
 // Noop function.
 const fn = (obj, key) => typeof obj[key] === 'function' ? obj[key] : () => 0;
@@ -18,10 +19,7 @@ module.exports = (opts, emit) => {
   let property_value_yearly = opts.property_value; // yearly house price
   let property_tax = null;
 
-  let income = opts.income;
-  const income_old_age = opts.income_old_age || 1; // how much % less do I make as a pensioner
-  const tax = opts.tax || { getNetIncome: income => income }; // 0% tax default
-  let income_net = tax.getNetIncome(income); // after tax income
+  const income = new Income(opts);
   let expenses = opts.expenses; // monthly expenses for this year
   const rrsp_allowance = opts.rrsp_allowance || 0; // % yearly
 
@@ -55,12 +53,12 @@ module.exports = (opts, emit) => {
     const stock_return = opts.stock_return(); // stock market return for this month
 
     // After tax and expenses available income.
-    let available = (income_net / 12) - expenses;
+    let available = (income.getNet() / 12) - expenses;
 
     // Pay rent and invest on stock market.
     invest(stock.rent, available - rent, {
       stock_return,
-      rrsp_allowance: (income * rrsp_allowance) / 12
+      rrsp_allowance: (income.get() * rrsp_allowance) / 12
     });
 
     // Buy condition.
@@ -101,7 +99,7 @@ module.exports = (opts, emit) => {
 
       invest(stock.buy, available, {
         stock_return,
-        rrsp_allowance: (income * rrsp_allowance) / 12
+        rrsp_allowance: (income.get() * rrsp_allowance) / 12
       });
     }
 
@@ -116,7 +114,7 @@ module.exports = (opts, emit) => {
 
         if (profit > 0) {
           // Capital gains taxes are half of income tax.
-          stock[i].personal.total -= (tax.getNetIncome(income + profit) - income_net) / 2;
+          stock[i].personal.total -= (income.getNet(income.get() + profit) - income.getNet()) / 2;
         }
 
         ['invested', 'profit'].map(k => stock[i].personal[k] = 0); // reset personal account
@@ -125,10 +123,10 @@ module.exports = (opts, emit) => {
         //  this is unrealistic as the RRSP would be drawn in portions.
         if (rrsp_allowance) {
           const rrsp = stock[i].rrsp.invested + stock[i].rrsp.profit;
-          stock[i].rrsp.total = tax.getNetIncome((income * income_old_age) + rrsp) - income_net;
+          stock[i].rrsp.total = income.getNet(income.getOld() + rrsp) - income.getNet();
 
           // Invest tax credit into RRSP.
-          const rrsp_credit = income_net - tax.getNetIncome(income - stock[i].rrsp.credit);
+          const rrsp_credit = income.getNet() - income.getNet(income.get() - stock[i].rrsp.credit);
           stock[i].personal.invested += rrsp_credit;
           stock[i].rrsp.credit = 0;
           emit(now, `${i}:rrsp_credit`, rrsp_credit);
@@ -140,8 +138,7 @@ module.exports = (opts, emit) => {
 
       rent *= 1 + opts.rent_increase(); // rent is more expensive
 
-      income *= 1 + opts.income_increase; // I make more
-      income_net = tax.getNetIncome(income); // new after tax income
+      income.increase(opts.income_increase); // I make more
       expenses *= 1 + opts.expenses_increase; // more expenses
 
       year += 1; month = 0;
