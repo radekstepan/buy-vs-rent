@@ -58,7 +58,7 @@ module.exports = (opts, emit) => {
     // Pay rent and invest on stock market.
     invest(stock.rent, available - rent, {
       stock_return,
-      rrsp_allowance: (income.get() * rrsp_allowance) / 12
+      rrsp_allowance: (income.get(-1) * rrsp_allowance) / 12
     });
 
     // Buy condition.
@@ -99,7 +99,7 @@ module.exports = (opts, emit) => {
 
       invest(stock.buy, available, {
         stock_return,
-        rrsp_allowance: (income.get() * rrsp_allowance) / 12
+        rrsp_allowance: (income.get(-1) * rrsp_allowance) / 12
       });
     }
 
@@ -138,7 +138,7 @@ module.exports = (opts, emit) => {
 
       rent *= 1 + opts.rent_increase(); // rent is more expensive
 
-      income.increase(opts.income_increase); // I make more
+      income.increase(); // I make more
       expenses *= 1 + opts.expenses_increase; // more expenses
 
       year += 1; month = 0;

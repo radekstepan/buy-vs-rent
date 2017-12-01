@@ -6,6 +6,7 @@ const opts = {
   iterations: 1,
   years: 1,
   income: 1200,
+  income_increase: 0.5, // 50% each year :)
   tax: {
     getNetIncome: income => income * 0.7 // 30%
   },
@@ -16,9 +17,9 @@ const opts = {
   stock_return: () => 0.1,
 };
 
-const personal_after_tax = 585;
-const rrsp_after_tax = 329;
-const rrsp_credit = 168;
+const personal_after_tax = 715;
+const rrsp_after_tax = 220;
+const rrsp_credit = 112;
 
 let called = 0;
 sample(opts, (time, key, val) => {
