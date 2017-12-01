@@ -129,7 +129,11 @@
 
         g.append("g")
           .attr("transform", `translate(0,${height})`)
-          .call(d3.axisBottom(x).ticks(data.opts.years))
+          .call(
+            d3.axisBottom(x)
+              .tickSize(-height)
+              .ticks(data.opts.years)
+          )
           .append("text")
             .attr("x", x(data.opts.years))
             .attr("y", -10)
@@ -138,7 +142,11 @@
             .text("Years");
 
         g.append("g")
-          .call(d3.axisLeft(y).tickFormat(d => numeral(d).format('$0.0a')))
+          .call(
+            d3.axisLeft(y)
+              .tickSize(-width)
+              .tickFormat(d => numeral(d).format('$0.0a'))
+          )
           .append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", 6)
