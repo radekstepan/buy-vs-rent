@@ -4,9 +4,10 @@ class Income {
   constructor(opts) {
     this.opts = opts;
 
-    this._getNet = memoize(this.opts.tax ? this.opts.tax.getNetIncome : (val) => val); // 0% tax default
+    const { tax, income } = this.opts;
+    this._getNetIncome = memoize(tax ? tax.getNetIncome.bind(tax) : (val) => val); // 0% tax default
 
-    this.income = [this.opts.income];
+    this.income = [income];
   }
 
   get() {
@@ -14,7 +15,7 @@ class Income {
   }
 
   getNet(amount = null) {
-    return this._getNet(amount === null ? this.get() : amount);
+    return this._getNetIncome(amount === null ? this.get() : amount);
   }
 
   getOld() {
@@ -22,7 +23,7 @@ class Income {
   }
 
   increase(inc) {
-    this.income.push(this.get() * 1 + inc);
+    this.income.push(this.get() * (1 + inc));
   }
 }
 
