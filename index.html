@@ -35,7 +35,11 @@
         {% if (o.purchase.rate) { %}
           <tr>
             <td>Property purchases:</td>
-            <td>{%= o.purchase.rate %}% (mortgage &asymp; {%= numeral(o.purchase.mortgage).format('$0a') %})</td>
+            <td>
+              {%= o.purchase.rate %}%
+              (mortgage &asymp; {%= numeral(o.purchase.mortgage).format('$0a') %},
+               deposit &asymp; {%= numeral(o.purchase.deposit).format('$0a') %})
+            </td>
           </tr>
         {% } %}
         {% if (o.defaults.rate) { %}

@@ -11,6 +11,7 @@ const data = {
   buy: [],
   rent: [],
   defaults: [],
+  deposit: [],
   purchase: [],
   net_worth: {}
 };
@@ -34,7 +35,8 @@ for (let i = 0; i < opts.samples; i++) {
         case 'default':
           return data.defaults.push(val.mortgage_rate);
         case 'purchase':
-          return data.purchase.push(Math.round(val.mortgage));
+          data.purchase.push(Math.round(val.mortgage));
+          return data.deposit.push(Math.round(val.deposit_needed));
       }
     });
   })();
@@ -75,7 +77,9 @@ data.defaults = {
 // Get median mortgage $ when we buy.
 data.purchase = {
   mortgage: d3.quantile(data.purchase.sort(d3.ascending), 0.5),
+  deposit: d3.quantile(data.deposit.sort(d3.ascending), 0.5),
   rate: 100 * data.purchase.length / opts.samples,
 };
+delete data.deposit;
 
 fs.writeFileSync('./data.json', JSON.stringify(data));
