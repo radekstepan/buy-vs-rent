@@ -1,6 +1,6 @@
-const invest = require('./modules/invest');
 const Mortgage = require('./modules/mortgage');
 const Income = require('./modules/income');
+const Account = require('./modules/account');
 
 // Noop function.
 const fn = (obj, key) => typeof obj[key] === 'function' ? obj[key] : () => 0;
@@ -11,7 +11,6 @@ module.exports = (opts, emit) => {
     'mortgage_deposit',
     'mortgage_insurance',
     'mortgage_rate',
-    'stock_return',
     'rent_increase'
   ].map(key => opts[key] = fn(opts, key));
 
@@ -21,24 +20,15 @@ module.exports = (opts, emit) => {
 
   const income = new Income(opts);
   let expenses = opts.expenses; // monthly expenses for this year
-  const rrsp_allowance = opts.rrsp_allowance || 0; // % yearly
 
   let rent = opts.rent; // monthly rent for this year
   const mortgage = new Mortgage(opts);
 
   let deposit = opts.savings || 0; // $ deposit saved so far
-  const stock = {};
-  ['rent', 'buy'].map(i => {
-    stock[i] = {};
-    ['personal', 'rrsp'].map(j => {
-      stock[i][j] = {
-        invested: 0,
-        profit: 0,
-        total: 0,
-        credit: 0
-      };
-    });
-  });
+  const account = {
+    rent: new Account(opts),
+    buy: new Account(opts)
+  };
 
   let stop = false;
   let year = 1;
@@ -49,16 +39,15 @@ module.exports = (opts, emit) => {
     month += 1; // new month
     now = ((year - 1) * 12) + month;
 
-    // Stock market.
-    const stock_return = opts.stock_return(); // stock market return for this month
+    // Update accounts.
+    ['rent', 'buy'].map(k => account[k].month());
 
     // After tax and expenses available income.
     let available = (income.getNet() / 12) - expenses;
 
     // Pay rent and invest on stock market.
-    invest(stock.rent, available - rent, {
-      stock_return,
-      rrsp_allowance: (income.get(-1) * rrsp_allowance) / 12
+    account.rent.invest(available - rent, {
+      rrsp_allowance: income.getRRSPAllowance() / 12
     });
 
     // Buy condition.
@@ -97,39 +86,33 @@ module.exports = (opts, emit) => {
         }
       }
 
-      invest(stock.buy, available, {
-        stock_return,
-        rrsp_allowance: (income.get(-1) * rrsp_allowance) / 12
+      account.buy.invest(available, {
+        rrsp_allowance: income.getRRSPAllowance() / 12
       });
     }
 
     // A new year.
     if (!(month % 12)) {
       // First log the stock balance (and pay tax on it).
-      ['rent', 'buy'].map(i => {
+      ['rent', 'buy'].map(k => {
         // Pay tax on stock profit in personal.
-        const { profit } = stock[i].personal;
-        stock[i].personal.total += stock[i].personal.invested;
-        stock[i].personal.total += profit;
-
-        if (profit > 0) {
+        let profit;
+        if ((profit = account[k].getPersonalProfit()) > 0) {
           // Capital gains taxes are half of income tax.
-          stock[i].personal.total -= (income.getNet(income.get() + profit) - income.getNet()) / 2;
+          account[k].personal.total -= (income.getNet(income.get() + profit) - income.getNet()) / 2;
         }
 
-        ['invested', 'profit'].map(k => stock[i].personal[k] = 0); // reset personal account
-
         // Assume RRSP would be taxed on the whole amount, after yearly "old person" income...
-        //  this is unrealistic as the RRSP would be drawn in portions.
-        if (rrsp_allowance) {
-          const rrsp = stock[i].rrsp.invested + stock[i].rrsp.profit;
-          stock[i].rrsp.total = income.getNet(income.getOld() + rrsp) - income.getNet();
+        //  (this is highly conservative as in reality the RRSP would be drawn in portions)
+        if (opts.rrsp_allowance) {
+          const rrsp = account[k].rrsp.invested + account[k].rrsp.profit;
+          account[k].rrsp.total = income.getNet(income.getOld() + rrsp) - income.getNet();
 
           // Invest tax credit into RRSP.
-          const rrsp_credit = income.getNet() - income.getNet(income.get() - stock[i].rrsp.credit);
-          stock[i].personal.invested += rrsp_credit;
-          stock[i].rrsp.credit = 0;
-          emit(now, `${i}:rrsp_credit`, rrsp_credit);
+          const rrsp_credit = income.getNet() - income.getNet(income.get() - account[k].rrsp.credit);
+          account[k].personal.invested += rrsp_credit;
+          account[k].rrsp.credit = 0;
+          emit(now, `${k}:rrsp_credit`, rrsp_credit);
         }
       });
 
@@ -145,23 +128,23 @@ module.exports = (opts, emit) => {
 
       // Log it.
       let v = {
-        personal: stock.rent.personal.total,
-        rrsp: stock.rent.rrsp.total
+        personal: account.rent.personal.total,
+        rrsp: account.rent.rrsp.total
       };
       emit(now, 'rent:net_worth', v);
 
       if (mortgage.paid_off) {
         if (mortgage.defaulted) {
           v = {
-            personal: stock.buy.personal.total,
-            rrsp: stock.buy.rrsp.total
+            personal: account.buy.personal.total,
+            rrsp: account.buy.rrsp.total
           };
         } else {
           // Property value (less mortgage with equity paid off) and stock.
           v = {
             house: (property_value * (1 - opts.property_transaction_fees)) - mortgage.balance,
-            personal: stock.buy.personal.total,
-            rrsp: stock.buy.rrsp.total
+            personal: account.buy.personal.total,
+            rrsp: account.buy.rrsp.total
           }
         }
       } else {

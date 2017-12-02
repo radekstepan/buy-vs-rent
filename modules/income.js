@@ -21,6 +21,10 @@ class Income {
     return this._getNetIncome(amount === null ? this.get() : amount);
   }
 
+  getRRSPAllowance() {
+    return this.get(-1) * (this.opts.rrsp_allowance || 0); // % yearly
+  }
+
   getOld() {
     return this.get() * (this.opts.income_old_age || 1); // how much % less do I make as a pensioner
   }
