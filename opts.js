@@ -23,7 +23,7 @@ opts.years = 30;
 
 opts.inflation = 0.02; // desired inflation rate set by Bank of Canada
 
-opts.income = n('85k'); // $ net yearly income
+opts.income = n('100k'); // $ net yearly income
 opts.income_increase = opts.inflation; // % yearly
 opts.income_old_age = 0.2; // % less income in old age
 opts.tax = tax;
@@ -34,7 +34,7 @@ opts.rrsp_allowance = 0.18; // % yearly
 
 opts.savings = n('10k'); // monies already saved up
 
-opts.rent = n('1.5k'); // $ monthly
+opts.rent = n('2k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
 opts.rent_increase = (function() { // yearly rate
   const d = r('rent_increase.json', parseFloat);
