@@ -82,4 +82,4 @@ data.purchase = {
 };
 delete data.deposit;
 
-fs.writeFileSync('./data.json', JSON.stringify(data));
+fs.writeFileSync('./app/data.json', JSON.stringify(data));

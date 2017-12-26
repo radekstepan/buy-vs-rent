@@ -23,16 +23,16 @@ opts.years = 30;
 
 opts.inflation = 0.02; // desired inflation rate set by Bank of Canada
 
-opts.income = n('100k'); // $ net yearly income
+opts.income = n('80k'); // $ net yearly income
 opts.income_increase = opts.inflation; // % yearly
 opts.income_old_age = 0.2; // % less income in old age
 opts.tax = tax;
-opts.expenses = n('2.5k'); // monthly expenses
+opts.expenses = n('2k'); // monthly expenses (wo/ rent)
 opts.expenses_increase = opts.inflation; // % yearly
 
 opts.rrsp_allowance = 0.18; // % yearly
 
-opts.savings = n('10k'); // monies already saved up
+opts.savings = n('20k'); // monies already saved up
 
 opts.rent = n('2k'); // $ monthly
 // https://www.ontario.ca/page/rent-increase-guideline
@@ -49,7 +49,7 @@ opts.stock_return = (function() { // yearly rate
 })();
 // opts.stock_return = y2M(opts.inflation + 0.02); // 2% above inflation
 
-opts.property_value = n('300k'); // $
+opts.property_value = n('200k'); // $
 opts.property_type = 'apartment'; // [ 'single_family', 'apartment' ]
 // opts.property_appreciation = (function() { // monthly rate
 //   const d = r(`${opts.property_type}_appreciation_toronto.json`, parseFloat);
