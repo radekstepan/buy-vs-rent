@@ -1,4 +1,4 @@
-#Buy vs Rent
+# Buy vs Rent
 
 [![Build Status](https://img.shields.io/travis/radekstepan/buy-vs-rent/master.svg?style=flat)](https://travis-ci.org/radekstepan/buy-vs-rent)
 
