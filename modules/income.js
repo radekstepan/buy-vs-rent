@@ -1,11 +1,11 @@
-const _ = require('lodash');
+const memoize = require('lodash.memoize');
 
 class Income {
   constructor(opts) {
     this.opts = opts;
 
     const { tax, income, income_increase } = this.opts;
-    this._getNetIncome = _.memoize(tax ? tax : val => val); // 0% tax default
+    this._getNetIncome = memoize(tax ? tax : val => val); // 0% tax default
 
     this.income = [
       income / (1 + income_increase), // (assumed) previous year's income for RRSP
