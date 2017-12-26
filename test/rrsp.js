@@ -7,9 +7,7 @@ const opts = {
   years: 1,
   income: 1200,
   income_increase: 0.5, // 50% each year :)
-  tax: {
-    getNetIncome: income => income * 0.7 // 30%
-  },
+  tax: income => income * 0.7, // 30%
   rrsp_allowance: 0.2,
   expenses: 10,
   rent: 10,

@@ -6,9 +6,7 @@ const opts = {
   iterations: 1,
   years: 1,
   income: 1200,
-  tax: {
-    getNetIncome: income => income * 0.9 // 10%
-  },
+  tax: income => income * 0.9, // 10%
   expenses: 10,
   rrsp_allowance: 0, // force personal account only
   rent: 10,
